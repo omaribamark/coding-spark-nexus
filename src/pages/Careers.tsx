@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Footer } from "@/components/layout/Footer";
 import { MapPin, DollarSign } from "lucide-react";
 import weAreHiring from "../assets/image 17.png";
 
-const Careers = ({ onApply }) => {
+const Careers = ({ onApply }: { onApply?: () => void }) => {
   const handleApplyNow = () => {
     if (onApply) {
       onApply();
@@ -88,18 +89,18 @@ const Careers = ({ onApply }) => {
   ];
 
   return (
-    <main className="pt-16">
+    <main className="pt-28">
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-subtle">
+      <section className="py-16 sm:py-20 bg-gradient-subtle">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 font-oswald">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 font-oswald">
               Careers
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed font-nunito font-semibold">
+            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed font-nunito font-semibold">
               Join our growing team of innovators, developers, and educators.
             </p>
-            <p className="text-lg text-muted-foreground mt-4 leading-relaxed font-nunito max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed font-nunito max-w-3xl mx-auto">
               At CodingPlayGround Technologies, we're building a culture of innovation, creativity, and impact. We welcome passionate people at all levels, including entry-level applicants eager to learn. We also offer internships for beginners looking to hone their skills and grow into professionals.
             </p>
           </div>
@@ -107,18 +108,18 @@ const Careers = ({ onApply }) => {
       </section>
 
       {/* Current Open Roles & Hiring Image */}
-      <section className="py-16">
+      <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-16 justify-center max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-16 justify-center max-w-6xl mx-auto">
             {/* Open Roles Card */}
-            <Card className="p-8 shadow-card hover:shadow-elegant transition-smooth flex-1 max-w-lg">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#170961] mb-2 font-oswald underline">
+            <Card className="p-6 sm:p-8 shadow-card hover:shadow-elegant transition-smooth flex-1 max-w-lg w-full">
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-primary mb-2 font-oswald underline">
                   Current Open Roles
                 </h2>
               </div>
               
-              <ul className="space-y-4 mb-8">
+              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 {[
                   "Software Engineer",
                   "Frontend/Backend Developer", 
@@ -128,8 +129,8 @@ const Careers = ({ onApply }) => {
                   "Robotics Engineer (Tutor)",
                   "Video Editor"
                 ].map((role, index) => (
-                  <li key={index} className="flex items-center text-foreground text-lg font-nunito">
-                    <span className="text-[#170961] font-bold mr-3 text-xl">✔</span>
+                  <li key={index} className="flex items-center text-foreground text-base sm:text-lg font-nunito">
+                    <span className="text-primary font-bold mr-3 text-lg sm:text-xl">✔</span>
                     {role}
                   </li>
                 ))}
@@ -140,7 +141,7 @@ const Careers = ({ onApply }) => {
                   onClick={handleApplyNow}
                   variant="hero" 
                   size="lg"
-                  className="w-full max-w-xs mx-auto bg-[#170961] hover:bg-[#1a0b70]"
+                  className="w-full max-w-xs mx-auto bg-primary hover:bg-primary/90"
                 >
                   Apply Now
                 </Button>
@@ -148,11 +149,11 @@ const Careers = ({ onApply }) => {
             </Card>
 
             {/* We Are Hiring Image */}
-            <div className="flex-1 flex justify-center lg:justify-start">
+            <div className="flex-1 flex justify-center lg:justify-start w-full">
               <img 
                 src={weAreHiring} 
                 alt="We Are Hiring" 
-                className="w-64 h-auto lg:mt-8"
+                className="w-48 sm:w-64 h-auto lg:mt-8"
               />
             </div>
           </div>
@@ -284,6 +285,9 @@ const Careers = ({ onApply }) => {
           </Button>
         </div>
       </section>
+
+      <Footer />
+      <Footer />
     </main>
   );
 };

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/layout/Footer";
 import { Linkedin, Github, Twitter } from "lucide-react";
 
 // Profile images (you'll need to update these paths to match your actual images)
@@ -214,6 +215,8 @@ const Team = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 };

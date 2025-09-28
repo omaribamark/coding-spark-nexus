@@ -7,114 +7,91 @@ import whatsappIcon from "@/assets/Vector.svg";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen bg-white overflow-hidden" style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
+    <section className="relative min-h-screen bg-background overflow-hidden font-nunito">
       {/* Background Network Decorations - REMOVED OPACITY */}
       <div className="absolute inset-0 overflow-hidden">
         <img
           src={networkLeft}
           alt=""
-          className="absolute left-0 bottom-0 w-80 h-80 z-1"  // REMOVED opacity-30
+          className="absolute left-0 bottom-0 w-60 sm:w-80 h-60 sm:h-80 z-1"  // REMOVED opacity-30
         />
         <img
           src={networkRight}
           alt=""
-          className="absolute right-0 bottom-0 w-80 h-80 z-1"  // REMOVED opacity-30
+          className="absolute right-0 bottom-0 w-60 sm:w-80 h-60 sm:h-80 z-1"  // REMOVED opacity-30
         />
       </div>
 
       <div className="container relative z-3 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Increased pt-32 to pt-40 to move content down more */}
-        <div className="max-w-4xl mx-auto text-center flex flex-col justify-center min-h-screen pt-40 pb-20">
+        <div className="max-w-4xl mx-auto text-center flex flex-col justify-center min-h-screen pt-32 sm:pt-40 pb-20">
           {/* Main Heading with Logo and Arrow */}
           <div className="relative inline-block mb-4">
-            {/* Logo positioned to the left of first B in Building */}
+            {/* Logo positioned to the left of first B in Building - hidden on mobile */}
             <img
               src={codingDecor}
               alt=""
-              className="absolute -left-12 -top-10 w-24 h-24 z-4"
+              className="absolute -left-8 sm:-left-12 -top-6 sm:-top-10 w-16 h-16 sm:w-24 sm:h-24 z-4 hidden sm:block"
             />
             
             {/* Headline */}
             <h1 
-              className="text-4xl lg:text-5xl font-black leading-tight mb-0 tracking-tight"
-              style={{ 
-                color: '#170961',
-                fontFamily: "'Oswald', Arial, sans-serif",
-                lineHeight: '1.15'
-              }}
+              className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black leading-tight mb-0 tracking-tight text-primary font-oswald"
             >
-              Building People. Building <span className="text-[#170961]">Products</span>.<br />
+              Building People. Building <span className="text-primary">Products</span>.<br />
               Building the Future.
             </h1>
 
-            {/* Arrow image below "Products" - MOVED MORE TO THE RIGHT */}
-            <div className="absolute left-96 lg:left-[46rem] top-16 z-5">
+            {/* Arrow image below "Products" - MOVED MORE TO THE RIGHT - hidden on mobile */}
+            <div className="absolute left-64 sm:left-80 lg:left-96 xl:left-[46rem] top-12 sm:top-16 z-5 hidden sm:block">
               <img
                 src={arrowImg}
                 alt=""
-                className="w-36 lg:w-40 h-auto"
+                className="w-24 sm:w-36 lg:w-40 h-auto"
               />
             </div>
           </div>
 
           {/* Subtext */}
           <p 
-            className="text-xl text-gray-800 mb-10 leading-relaxed"
-            style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
+            className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-8 sm:mb-10 leading-relaxed px-4 sm:px-0 font-nunito"
           >
-            We build, we train, we launch. At CodingPlayGround Technologies, we transform ideas into<br />
+            We build, we train, we launch. At CodingPlayGround Technologies, we transform ideas into<br className="hidden sm:block" />
             <span className="whitespace-nowrap">world-class digital products</span> while empowering learners to become tech experts.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 lg:gap-8 justify-center items-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 justify-center items-center mb-8">
             <Button 
-              className="bg-[#170961] hover:bg-[#170961]/90 text-white px-10 py-4 rounded-2xl font-medium text-lg min-w-[200px] shadow-lg hover:shadow-xl transition-all"
-              style={{ 
-                borderRadius: '15px',
-                fontFamily: "'Nunito', Arial, sans-serif",
-                fontSize: '1.1rem',
-                fontWeight: '500'
-              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 sm:px-10 py-3 sm:py-4 rounded-2xl font-medium text-base sm:text-lg min-w-[200px] shadow-elegant hover:shadow-glow transition-smooth font-nunito"
             >
               Start a Project
             </Button>
             <Button 
-              className="bg-[#170961] hover:bg-[#170961]/90 text-white px-10 py-4 rounded-2xl font-medium text-lg min-w-[200px] shadow-lg hover:shadow-xl transition-all"
-              style={{ 
-                borderRadius: '15px',
-                fontFamily: "'Nunito', Arial, sans-serif",
-                fontSize: '1.1rem',
-                fontWeight: '500'
-              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 sm:px-10 py-3 sm:py-4 rounded-2xl font-medium text-base sm:text-lg min-w-[200px] shadow-elegant hover:shadow-glow transition-smooth font-nunito"
             >
               Join our Academy
             </Button>
           </div>
 
           {/* WhatsApp CTA */}
-          <div className="text-center mt-12" style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
+          <div className="text-center mt-8 sm:mt-12 font-nunito">
             <a
               href="https://wa.me/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex flex-col items-center no-underline text-gray-800 hover:text-gray-700 transition-colors"
+              className="inline-flex flex-col items-center no-underline text-muted-foreground hover:text-foreground transition-smooth"
             >
               <img 
                 src={whatsappIcon} 
                 alt="WhatsApp" 
-                className="h-12 w-12 mb-2 hover:scale-110 transition-transform" 
+                className="h-10 w-10 sm:h-12 sm:w-12 mb-2 hover:scale-110 transition-transform" 
               />
-              <span className="text-lg">Chat on WhatsApp</span>
+              <span className="text-base sm:text-lg">Chat on WhatsApp</span>
             </a>
           </div>
         </div>
       </div>
-
-      {/* Add Oswald and Nunito fonts */}
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@900&family=Nunito:wght@400;500;600&display=swap');
-      `}</style>
     </section>
   );
 }

@@ -196,7 +196,7 @@ const Contact = () => {
                       src={social.src}
                       alt={social.alt}
                       className="w-4 h-4 object-contain"
-                      onError={e => { e.target.style.display = "none"; }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                   </div>
                 ))}

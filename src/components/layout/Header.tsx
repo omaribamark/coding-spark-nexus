@@ -22,7 +22,7 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Increased height to accommodate larger logo */}
         <div className="flex items-center justify-between h-28">
@@ -36,15 +36,15 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation - adjusted for larger navbar */}
-          <nav className="hidden lg:flex items-center space-x-2">
+          <nav className="hidden lg:flex items-center space-x-1">
             {navigationItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`px-5 py-4 text-base font-medium rounded-md transition-colors ${
+                className={`px-4 py-3 text-sm font-medium rounded-lg transition-smooth font-nunito ${
                   isActive(item.href)
-                    ? "text-[#2D1B69] bg-gray-100"
-                    : "text-gray-700 hover:text-[#2D1B69] hover:bg-gray-50"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-foreground hover:text-primary hover:bg-muted"
                 }`}
               >
                 {item.label}
@@ -66,16 +66,16 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
+            <div className="px-4 pt-2 pb-4 space-y-1">
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`block px-4 py-4 text-base font-medium rounded-md transition-colors ${
+                  className={`block px-4 py-3 text-base font-medium rounded-lg transition-smooth font-nunito ${
                     isActive(item.href)
-                      ? "text-[#2D1B69] bg-gray-100"
-                      : "text-gray-700 hover:text-[#2D1B69] hover:bg-gray-50"
+                      ? "text-primary bg-primary/10 font-semibold"
+                      : "text-foreground hover:text-primary hover:bg-muted"
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >

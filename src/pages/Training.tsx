@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Footer } from "@/components/layout/Footer";
 import group27 from "@/assets/Group 27.png";
 import webflowIcon from "@/assets/image 10.png";
 import bubbleIcon from "@/assets/image 11.png";
@@ -131,44 +132,40 @@ const nocode = [
 
 const Training = () => {
   return (
-    <main className="pt-16">
+    <main className="pt-28">
       {/* Training Programs Section */}
-      <section className="min-h-screen bg-white" style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
-        <div className="max-w-[1220px] mx-auto px-12 py-10 pb-5 relative">
+      <section className="min-h-screen bg-background font-nunito">
+        <div className="max-w-[1220px] mx-auto px-4 sm:px-6 lg:px-12 py-10 pb-5 relative">
           {/* Added pt-20 to move content down */}
-          <div className="pt-20">
+          <div className="pt-12 sm:pt-20">
             {/* Page Title */}
-            <h1 className="text-[2.7rem] text-[#170961] font-black text-center mb-[18px]"
-                style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.7rem] text-primary font-black text-center mb-4 sm:mb-[18px] font-oswald">
               Training Programs
             </h1>
             
             {/* Subtitle */}
-            <div className="text-[1.18rem] text-[#242424] text-center mb-[38px]"
-                 style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
+            <div className="text-base sm:text-lg lg:text-[1.18rem] text-foreground text-center mb-8 sm:mb-[38px] px-4 font-nunito">
               Our Software development company offers training programs for future developers, Certificate & Internship Placement is guaranteed
             </div>
 
             {/* Roles grid */}
             <section>
-              <div className="text-[#170961] font-bold text-[1.3rem] mb-[18px]"
-                   style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+              <div className="text-primary font-bold text-lg sm:text-xl lg:text-[1.3rem] mb-4 sm:mb-[18px] font-oswald">
                 <span className="underline cursor-pointer">Roles</span> we train for
               </div>
-              <div className="grid grid-cols-4 gap-[22px] mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[22px] mb-10">
                 {rolesGrid.flat().map((role, idx) => (
                   <div
                     key={role.title}
-                    className={`flex flex-col items-center font-medium text-[1.08rem] text-[#170961] min-w-0 border border-[#ECECEC] relative rounded-[15px] shadow-[0_4px_16px_rgba(36,36,36,0.08)] px-2 pt-8 pb-6 ${
-                      role.highlight ? 'bg-[#E7E7FA]' : 'bg-white'
+                    className={`flex flex-col items-center font-medium text-base sm:text-lg lg:text-[1.08rem] text-primary min-w-0 border border-border relative rounded-[15px] shadow-card px-2 pt-6 sm:pt-8 pb-4 sm:pb-6 ${
+                      role.highlight ? 'bg-accent/20' : 'bg-card'
                     }`}
-                    style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
                   >
                     <div className="mb-3">{role.icon}</div>
-                    {role.title}
-                    {/* Arrow icon to the right of Virtual Assistant */}
+                    <span className="text-center leading-tight">{role.title}</span>
+                    {/* Arrow icon to the right of Virtual Assistant - hidden on mobile */}
                     {role.title === "Virtual Assistant" && (
-                      <img src={arrowIcon} alt="Arrow" className="absolute right-[-50px] top-1/2 transform -translate-y-1/2 w-[38px] h-[38px]" />
+                      <img src={arrowIcon} alt="Arrow" className="absolute right-[-50px] top-1/2 transform -translate-y-1/2 w-[38px] h-[38px] hidden lg:block" />
                     )}
                   </div>
                 ))}
@@ -176,52 +173,44 @@ const Training = () => {
             </section>
 
             {/* Skills you will learn section */}
-            <section className="flex gap-8 mb-10 items-start">
-              <div className="flex-1" style={{ flexBasis: '340px' }}>
-                <div className="text-[#170961] font-bold text-[1.3rem] mb-[18px]"
-                     style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+            <section className="flex flex-col lg:flex-row gap-6 sm:gap-8 mb-10 items-start">
+              <div className="flex-1 order-2 lg:order-1">
+                <div className="text-primary font-bold text-lg sm:text-xl lg:text-[1.3rem] mb-4 sm:mb-[18px] font-oswald">
                   <span className="underline cursor-pointer">Skills</span> you will learn
                 </div>
-                <ul className="text-[1.08rem] text-[#242424] mb-0 pl-0 list-none"
-                    style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
+                <ul className="text-base sm:text-lg lg:text-[1.08rem] text-foreground mb-0 pl-0 list-none font-nunito">
                   {skills.map(skill => (
-                    <li key={skill} className="mb-[14px] flex items-center">
-                      <span className="text-[#170961] font-bold mr-[13px] text-[1.2rem]">✔</span> {skill}
+                    <li key={skill} className="mb-3 sm:mb-[14px] flex items-center">
+                      <span className="text-primary font-bold mr-3 sm:mr-[13px] text-lg sm:text-[1.2rem]">✔</span> {skill}
                     </li>
                   ))}
                 </ul>
               </div>
               
               {/* Larger image, no certificate circle */}
-              <div className="flex flex-col items-center justify-center max-w-[500px]">
-                <img src={group27} alt="Skill" className="w-full h-[260px] object-cover rounded-[16px] shadow-[0_2px_12px_rgba(36,36,36,0.08)]" />
+              <div className="flex flex-col items-center justify-center max-w-full lg:max-w-[500px] order-1 lg:order-2">
+                <img src={group27} alt="Skill" className="w-full max-w-[400px] lg:max-w-none h-[200px] sm:h-[260px] object-cover rounded-[16px] shadow-card" />
               </div>
             </section>
 
             {/* Languages and Tools */}
             <section>
-              <div className="text-[#170961] font-bold text-[1.3rem] mb-[18px]"
-                   style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+              <div className="text-primary font-bold text-lg sm:text-xl lg:text-[1.3rem] mb-4 sm:mb-[18px] font-oswald">
                 <span className="underline cursor-pointer">Languages</span> and Tools
               </div>
-              <div className="w-full flex flex-col gap-5 mb-[18px] items-start pl-5">
+              <div className="w-full flex flex-col gap-4 sm:gap-5 mb-4 sm:mb-[18px] items-center lg:items-start lg:pl-5">
                 {toolsGrid.map((row, i) => {
                   return (
                     <div
                       key={i}
-                      className="grid gap-[52px] justify-center max-w-full"
-                      style={{ 
-                        gridTemplateColumns: `repeat(${row.length}, 110px)`,
-                        width: `calc(110px * ${row.length} + 52px * ${row.length - 1})`
-                      }}
+                      className="flex flex-wrap gap-4 sm:gap-8 lg:gap-[52px] justify-center lg:justify-start max-w-full"
                     >
                       {row.map(tool => (
                         <div key={tool.name}
-                          className="bg-white rounded-full w-[110px] h-[110px] flex flex-col items-center justify-center shadow-[0_2px_12px_rgba(36,36,36,0.08)] font-semibold text-[1rem] text-[#170961] mb-2"
-                          style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
+                          className="bg-card rounded-full w-20 h-20 sm:w-24 sm:h-24 lg:w-[110px] lg:h-[110px] flex flex-col items-center justify-center shadow-card font-semibold text-xs sm:text-sm lg:text-[1rem] text-primary mb-2 font-nunito"
                         >
-                          <img src={tool.icon} alt={tool.name} className="w-12 h-12 mb-2" />
-                          <span>{tool.name}</span>
+                          <img src={tool.icon} alt={tool.name} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 mb-1 lg:mb-2" />
+                          <span className="text-center leading-tight">{tool.name}</span>
                         </div>
                       ))}
                     </div>
@@ -230,41 +219,36 @@ const Training = () => {
               </div>
             </section>
 
-            <div className="flex flex-row items-start mt-[38px] mb-0 min-h-[300px]">
+            <div className="flex flex-col lg:flex-row items-start mt-8 sm:mt-[38px] mb-0 min-h-[300px] gap-8">
               {/* No-Code Tools Section */}
-              <div className="flex-1 relative">
-                <div className="text-[#170961] font-bold text-[1.3rem] mb-[18px]"
-                     style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+              <div className="flex-1 relative order-2 lg:order-1">
+                <div className="text-primary font-bold text-lg sm:text-xl lg:text-[1.3rem] mb-4 sm:mb-[18px] font-oswald">
                   <span className="underline cursor-pointer">No-Code Tools</span>
                 </div>
-                <div className="flex gap-[22px] mb-[38px]">
+                <div className="flex flex-wrap gap-4 sm:gap-6 lg:gap-[22px] mb-8 sm:mb-[38px] justify-center lg:justify-start">
                   {nocode.map((tool) => (
                     <div key={tool.name}
-                      className="bg-white rounded-full w-[110px] h-[110px] flex flex-col items-center justify-center shadow-[0_2px_12px_rgba(36,36,36,0.08)] font-semibold text-[1rem] text-[#170961]"
-                      style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
+                      className="bg-card rounded-full w-20 h-20 sm:w-24 sm:h-24 lg:w-[110px] lg:h-[110px] flex flex-col items-center justify-center shadow-card font-semibold text-xs sm:text-sm lg:text-[1rem] text-primary font-nunito"
                     >
-                      <img src={tool.icon} alt={tool.name} className="w-12 h-12 mb-2 object-contain" />
-                      <span>{tool.name}</span>
+                      <img src={tool.icon} alt={tool.name} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 mb-1 lg:mb-2 object-contain" />
+                      <span className="text-center">{tool.name}</span>
                     </div>
                   ))}
                 </div>
                 
                 {/* Start Your Journey Today and Apply Now positioned horizontally */}
-                <div className="flex items-start gap-8 mt-5 max-w-full">
-                  <div className="flex-auto max-w-[350px]">
-                    <h2 className="text-[#170961] font-bold text-[2rem] mb-[14px]"
-                        style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
+                <div className="flex flex-col lg:flex-row items-start gap-4 lg:gap-8 mt-5 max-w-full">
+                  <div className="flex-auto max-w-full lg:max-w-[350px]">
+                    <h2 className="text-primary font-bold text-xl sm:text-2xl lg:text-[2rem] mb-3 sm:mb-[14px] font-oswald leading-tight">
                       Start Your<br />Journey Today!
                     </h2>
-                    <div className="text-[#242424] text-[1.08rem] mb-[22px]"
-                         style={{ fontFamily: "'Nunito', Arial, sans-serif" }}>
+                    <div className="text-foreground text-base sm:text-lg lg:text-[1.08rem] mb-6 sm:mb-[22px] font-nunito">
                       Apply now to kickstart your career with CodingPlayground Technology
                     </div>
                   </div>
-                  <div className="flex flex-col items-start justify-end gap-4 flex-auto mt-20 ml-[120px]">
+                  <div className="flex flex-col items-start justify-end gap-4 flex-auto mt-4 lg:mt-20 lg:ml-[120px]">
                     <Button 
-                      className="bg-[#1A1064] hover:bg-[#1A1064]/90 text-white rounded-[12px] text-[1.1rem] font-medium px-12 py-4 shadow-[0_4px_16px_rgba(23,9,97,0.11)] cursor-pointer transition-all"
-                      style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-[12px] text-base sm:text-lg lg:text-[1.1rem] font-medium px-8 sm:px-12 py-3 sm:py-4 shadow-elegant cursor-pointer transition-smooth font-nunito"
                     >
                       Apply Now
                     </Button>
@@ -275,8 +259,7 @@ const Training = () => {
                           behavior: 'smooth'
                         });
                       }}
-                      className="bg-transparent text-[#242424] border-none text-[1rem] cursor-pointer no-underline py-1 ml-[150px]"
-                      style={{ fontFamily: "'Nunito', Arial, sans-serif" }}
+                      className="bg-transparent text-foreground border-none text-sm sm:text-base lg:text-[1rem] cursor-pointer no-underline py-1 lg:ml-[150px] font-nunito"
                     >
                       Back to the top
                     </button>
@@ -285,20 +268,18 @@ const Training = () => {
               </div>
               
               {/* Certificate Badge Section */}
-              <div className="flex flex-col items-center justify-start min-w-[240px] relative"
-                   style={{ flex: '0 0 320px' }}>
-                <div className="relative w-[210px] h-[210px] mt-[18px] mb-6 block">
+              <div className="flex flex-col items-center justify-start min-w-full lg:min-w-[240px] relative order-1 lg:order-2 lg:flex-[0_0_320px]">
+                <div className="relative w-[180px] h-[180px] sm:w-[210px] sm:h-[210px] mt-4 sm:mt-[18px] mb-6 block">
                   <img
                     src={certificateCircle}
                     alt="Certificate + Internship Placement Guaranteed"
-                    className="w-[210px] h-[210px] block"
+                    className="w-[180px] h-[180px] sm:w-[210px] sm:h-[210px] block"
                   />
-                  <div className="absolute top-11 left-0 w-[210px] text-center text-white font-bold pointer-events-none"
-                       style={{ fontFamily: "'Oswald', Arial, sans-serif" }}>
-                    <div className="text-[22px] leading-[1.1]">Certificate</div>
-                    <div className="text-[18px] font-bold my-1.5">+</div>
-                    <div className="text-[17px] font-bold leading-[1.1]">Internship Placement</div>
-                    <div className="text-[17px] font-bold leading-[1.1]">Guaranteed</div>
+                  <div className="absolute top-8 sm:top-11 left-0 w-[180px] sm:w-[210px] text-center text-white font-bold pointer-events-none font-oswald">
+                    <div className="text-lg sm:text-[22px] leading-[1.1]">Certificate</div>
+                    <div className="text-base sm:text-[18px] font-bold my-1 sm:my-1.5">+</div>
+                    <div className="text-sm sm:text-[17px] font-bold leading-[1.1]">Internship Placement</div>
+                    <div className="text-sm sm:text-[17px] font-bold leading-[1.1]">Guaranteed</div>
                   </div>
                 </div>
               </div>
@@ -307,10 +288,7 @@ const Training = () => {
         </div>
       </section>
 
-      {/* Add Oswald and Nunito fonts */}
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700;900&family=Nunito:wght@400;500;600&display=swap');
-      `}</style>
+      <Footer />
     </main>
   );
 };
