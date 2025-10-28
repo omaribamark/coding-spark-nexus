@@ -5,7 +5,7 @@ export interface Claim {
   title: string;
   description: string;
   category: string;
-  status: 'pending' | 'verified' | 'false' | 'misleading' | 'needs_context';
+  status: 'pending' | 'verified' | 'false' | 'misleading' | 'needs_context' | 'ai_verified';
   verdict?: 'true' | 'false' | 'misleading' | 'verified' | 'needs_context';
   verdictText?: string;
   human_explanation?: string;
@@ -23,7 +23,16 @@ export interface Claim {
   created_at?: string;
   updated_at?: string;
   verified_by_ai?: boolean;
-  ai_verdict?: string;
+  ai_verdict?: {
+    id: string;
+    verdict: string;
+    explanation: string;
+    confidence_score: number;
+    sources?: Array<{ url: string; title: string }>;
+    disclaimer?: string;
+    is_edited_by_human?: boolean;
+    created_at: string;
+  };
   fact_checker?: {
     id: string;
     name: string;
@@ -146,13 +155,40 @@ class ClaimsService {
     }
   }
 
+  // Poll for AI verdict after claim submission
+  async pollForAIVerdict(claimId: string, maxAttempts: number = 10, delayMs: number = 1000): Promise<Claim> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const claim = await this.getClaimById(claimId);
+        
+        // Check if AI verdict is ready
+        if (claim.ai_verdict && claim.ai_verdict.explanation) {
+          return claim;
+        }
+        
+        // Wait before next attempt
+        if (attempt < maxAttempts - 1) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      } catch (error) {
+        console.error(`Poll attempt ${attempt + 1} failed:`, error);
+      }
+    }
+    
+    // Return the claim even if AI verdict isn't ready
+    return this.getClaimById(claimId);
+  }
+
   // IMPROVED Normalize claim status to ensure consistent handling
   private normalizeClaimStatus(claim: any): Claim {
-    // If claim has any verdict-related data, it's been reviewed
-    const hasBeenReviewed = claim.verdict || claim.verdictText || claim.human_explanation || claim.verdictDate;
+    // Check if AI has provided a verdict
+    const hasAIVerdict = claim.ai_verdict && (claim.ai_verdict.explanation || claim.ai_verdict.verdict);
     
-    if (hasBeenReviewed && claim.status === 'pending') {
-      // Update status based on verdict or other review indicators
+    // Check if human fact-checker has reviewed
+    const hasHumanReview = claim.verdict || claim.verdictText || claim.human_explanation || claim.verdictDate;
+    
+    // Priority: Human review overrides AI verdict
+    if (hasHumanReview && claim.status === 'pending') {
       if (claim.verdict) {
         switch (claim.verdict) {
           case 'true':
@@ -170,8 +206,31 @@ class ClaimsService {
             break;
         }
       } else if (claim.verdictText || claim.human_explanation) {
-        // If there's verdict text but no specific verdict, mark as reviewed
-        claim.status = 'verified'; // Default to verified if we have explanation but no verdict
+        claim.status = 'verified';
+      }
+    }
+    // If no human review but AI verdict exists, show AI verdict
+    else if (hasAIVerdict && claim.status === 'pending') {
+      claim.status = 'ai_verified';
+      claim.verified_by_ai = true;
+      
+      // Set verdictText from AI explanation for display
+      if (claim.ai_verdict.explanation && !claim.verdictText) {
+        claim.verdictText = claim.ai_verdict.explanation;
+      }
+      
+      // Set verdict from AI verdict if not already set
+      if (claim.ai_verdict.verdict && !claim.verdict) {
+        const aiVerdictLower = claim.ai_verdict.verdict.toLowerCase();
+        if (aiVerdictLower.includes('true') || aiVerdictLower.includes('correct')) {
+          claim.verdict = 'true';
+        } else if (aiVerdictLower.includes('false') || aiVerdictLower.includes('incorrect')) {
+          claim.verdict = 'false';
+        } else if (aiVerdictLower.includes('misleading')) {
+          claim.verdict = 'misleading';
+        } else {
+          claim.verdict = 'needs_context';
+        }
       }
     }
 

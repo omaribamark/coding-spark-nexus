@@ -50,11 +50,14 @@ const ClaimDetailsScreen = () => {
     }
   };
 
-  // CORRECTED: Check if claim has been reviewed using same logic as HomeTab
+  // Check if claim has been reviewed (AI or human)
   const isClaimReviewed = () => {
     if (!claim) return false;
     
-    // Check if there's a verdict or the status is not pending
+    // Check if there's AI verdict
+    if (claim.ai_verdict && claim.ai_verdict.explanation) return true;
+    
+    // Check if there's human verdict or the status is not pending
     const finalStatus = claim.verdict || claim.status;
     return finalStatus && finalStatus !== 'pending';
   };
@@ -107,10 +110,14 @@ const ClaimDetailsScreen = () => {
   };
 
   const getVerdictExplanation = () => {
+    // Priority: Human explanation first
     if (claim?.verdictText) return claim.verdictText;
     if (claim?.human_explanation) return claim.human_explanation;
     
-    // Fallback explanation based on status (using same logic as HomeTab)
+    // Then AI explanation
+    if (claim?.ai_verdict?.explanation) return claim.ai_verdict.explanation;
+    
+    // Fallback explanation based on status
     const finalStatus = claim?.verdict || claim?.status;
     
     switch (finalStatus) {
@@ -130,18 +137,42 @@ const ClaimDetailsScreen = () => {
     }
   };
 
-  // CORRECTED: Remove duplicate evidence sources
+  const hasAIVerdict = () => {
+    return claim?.ai_verdict && claim?.ai_verdict.explanation && !claim?.ai_verdict.is_edited_by_human;
+  };
+
+  const hasHumanVerdict = () => {
+    return claim?.verdictText || claim?.human_explanation || claim?.ai_verdict?.is_edited_by_human;
+  };
+
+  // Remove duplicate evidence sources
   const getVerdictSources = () => {
     if (!claim) return [];
     
     const sources = new Map();
     
-    // Process evidence_sources first
+    // Priority: AI verdict sources first (if available and not edited)
+    if (claim.ai_verdict?.sources && Array.isArray(claim.ai_verdict.sources) && !claim.ai_verdict.is_edited_by_human) {
+      claim.ai_verdict.sources.forEach((source: any) => {
+        const sourceUrl = source.url || source.link || '';
+        const sourceTitle = source.title || source.name || 'Source';
+        const key = sourceUrl || sourceTitle;
+        
+        if (key && !sources.has(key)) {
+          sources.set(key, {
+            title: sourceTitle,
+            url: sourceUrl
+          });
+        }
+      });
+    }
+    
+    // Process evidence_sources
     if (claim.evidence_sources && Array.isArray(claim.evidence_sources)) {
       claim.evidence_sources.forEach((source: any) => {
         const sourceUrl = source.url || source.link || '';
         const sourceTitle = source.title || source.name || 'Source';
-        const key = sourceUrl || sourceTitle; // Use URL as key if available, otherwise title
+        const key = sourceUrl || sourceTitle;
         
         if (key && !sources.has(key)) {
           sources.set(key, {
@@ -302,6 +333,49 @@ const ClaimDetailsScreen = () => {
           {/* Fact-Check Analysis with Border */}
           <View className="bg-white rounded-xl p-5 mb-6 border border-gray-200">
             <Text className="text-gray-500 font-pmedium text-sm mb-3">FACT-CHECK ANALYSIS</Text>
+            
+            {/* AI Disclaimer Banner (if AI verdict and not human-edited) */}
+            {hasAIVerdict() && claim?.ai_verdict?.disclaimer && (
+              <View className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
+                <View className="flex-row items-start">
+                  <Text className="text-blue-600 text-lg mr-2">🤖</Text>
+                  <View className="flex-1">
+                    <Text className="text-blue-800 font-pmedium text-xs mb-1">AI-GENERATED RESPONSE</Text>
+                    <Text className="text-blue-700 font-pregular text-xs leading-4">
+                      {claim.ai_verdict.disclaimer}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Human Verified Badge (if human-edited) */}
+            {hasHumanVerdict() && (
+              <View className="bg-green-50 rounded-lg p-3 mb-4 border border-green-200">
+                <View className="flex-row items-center">
+                  <Text className="text-green-600 text-lg mr-2">✓</Text>
+                  <Text className="text-green-800 font-pmedium text-xs">
+                    VERIFIED BY CRECO FACT-CHECKER
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Confidence Score (if AI verdict) */}
+            {hasAIVerdict() && claim?.ai_verdict?.confidence_score && (
+              <View className="mb-4">
+                <Text className="text-gray-500 font-pmedium text-xs mb-2">
+                  CONFIDENCE SCORE: {Math.round(claim.ai_verdict.confidence_score * 100)}%
+                </Text>
+                <View className="bg-gray-200 rounded-full h-2">
+                  <View 
+                    className="bg-blue-500 rounded-full h-2" 
+                    style={{ width: `${claim.ai_verdict.confidence_score * 100}%` }}
+                  />
+                </View>
+              </View>
+            )}
+
             <Text className="text-gray-700 font-pregular text-base leading-6">
               {getVerdictExplanation()}
             </Text>

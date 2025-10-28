@@ -113,20 +113,26 @@ const HomeTab: React.FC<Props> = (props: Props) => {
     }
   };
 
-  const getStatusLabel = (status: string, verdict?: string): string => {
+  const getStatusLabel = (status: string, verdict?: string, hasAIVerdict?: boolean): string => {
     // Use verdict if available, otherwise use status
     const finalStatus = verdict || status;
+    
+    // Add AI indicator if it's an AI verdict
+    const aiPrefix = hasAIVerdict ? '🤖 ' : '';
     
     switch (finalStatus) {
       case 'true':
       case 'resolved':
-        return '✓ True';
+        return `${aiPrefix}✓ True`;
       case 'false':
-        return '✗ False';
+        return `${aiPrefix}✗ False`;
       case 'misleading':
-        return '⚠ Misleading';
+        return `${aiPrefix}⚠ Misleading`;
       case 'unverifiable':
-        return '📋 Unverifiable';
+      case 'needs_context':
+        return `${aiPrefix}📋 Needs Context`;
+      case 'ai_verified':
+        return '🤖 AI Verified';
       default:
         return '⏳ Pending';
     }
@@ -285,7 +291,7 @@ const HomeTab: React.FC<Props> = (props: Props) => {
               {/* Status Badge */}
               <View className={`px-3 py-1.5 rounded-full self-start mb-3 ${getStatusColor(claim.status, claim.verdict)}`}>
                 <Text className={`text-xs font-psemibold ${getStatusTextColor(claim.status, claim.verdict)}`}>
-                  {getStatusLabel(claim.status, claim.verdict)}
+                  {getStatusLabel(claim.status, claim.verdict, claim.verified_by_ai || claim.status === 'ai_verified')}
                 </Text>
               </View>
 

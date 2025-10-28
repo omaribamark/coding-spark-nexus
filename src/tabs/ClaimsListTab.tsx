@@ -148,23 +148,28 @@ const ClaimsListTab = (props: Props) => {
     }
   };
 
-  // CORRECTED: Use same logic as HomeTab
-  const getStatusLabel = (status: string, verdict?: string): string => {
+  // Use same logic as HomeTab with AI support
+  const getStatusLabel = (status: string, verdict?: string, hasAIVerdict?: boolean): string => {
     // Use verdict if available, otherwise use status
     const finalStatus = verdict || status;
+    
+    // Add AI indicator if it's an AI verdict
+    const aiPrefix = hasAIVerdict ? '🤖 ' : '';
     
     switch (finalStatus) {
       case 'true':
       case 'verified':
       case 'resolved':
-        return '✓ True';
+        return `${aiPrefix}✓ True`;
       case 'false':
-        return '✗ False';
+        return `${aiPrefix}✗ False`;
       case 'misleading':
-        return '⚠ Misleading';
+        return `${aiPrefix}⚠ Misleading`;
       case 'needs_context':
       case 'unverifiable':
-        return '📋 Needs Context';
+        return `${aiPrefix}📋 Needs Context`;
+      case 'ai_verified':
+        return '🤖 AI Verified';
       default:
         return '⏳ Pending';
     }
@@ -395,7 +400,7 @@ const ClaimsListTab = (props: Props) => {
               {/* Status Badge - CORRECTED: Use both status and verdict */}
               <View className={`px-3 py-1.5 rounded-full self-start mb-3 ${getStatusColor(item.status, item.verdict)}`}>
                 <Text className={`text-xs font-psemibold ${getStatusTextColor(item.status, item.verdict)}`}>
-                  {getStatusLabel(item.status, item.verdict)}
+                  {getStatusLabel(item.status, item.verdict, item.verified_by_ai || item.status === 'ai_verified')}
                 </Text>
               </View>
 

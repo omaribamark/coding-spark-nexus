@@ -34,32 +34,37 @@ const SubmitClaimScreen = (props: Props) => {
     setIsSubmitting(true);
     
     try {
-      await claimsService.submitClaim({
-        category: 'general', // Backend will handle categorization
+      const response = await claimsService.submitClaim({
+        category: 'general',
         claimText: claimText,
         videoLink: videoLink,
         sourceLink: sourceLink,
         imageUrl: imageUri || undefined,
       });
       
+      const claimId = response.claim?.id || response.claimId;
+      
+      if (!claimId) {
+        throw new Error('No claim ID returned from server');
+      }
+
+      // Poll for AI verdict (max 10 seconds)
+      console.log('Waiting for AI verdict...');
+      const claimWithVerdict = await claimsService.pollForAIVerdict(claimId, 10, 1000);
+      
       setIsSubmitting(false);
-      Alert.alert(
-        'Success',
-        'Your claim has been submitted for verification',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Reset form and navigate back
-              setClaimText('');
-              setVideoLink('');
-              setSourceLink('');
-              setImageUri(null);
-              navigation.navigate('Home', { refresh: true });
-            },
-          },
-        ],
-      );
+      
+      // Reset form
+      setClaimText('');
+      setVideoLink('');
+      setSourceLink('');
+      setImageUri(null);
+      
+      // Navigate to claim details to show AI verdict
+      navigation.navigate('ClaimDetails', { 
+        claimId: claimId,
+        claim: claimWithVerdict 
+      });
       
     } catch (error: any) {
       setIsSubmitting(false);
