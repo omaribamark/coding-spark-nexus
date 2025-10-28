@@ -1,588 +1,690 @@
-# Backend Endpoints Documentation
+# HAKIKISHA Backend API Documentation
 
-## AI-Powered Claim Verification System
+## Overview
+This document provides comprehensive documentation for all backend endpoints required for the HAKIKISHA fact-checking platform.
 
-This document details all the backend endpoints for the fact-checking platform with automatic AI processing.
+## Base URL
+```
+https://your-api-domain.com/api/v1
+```
 
----
-
-## 🤖 Automatic AI Processing
-
-### Overview
-When a user submits a claim, the system **automatically**:
-1. Processes the claim with Poe AI (Web-Search model)
-2. Generates an AI verdict with disclaimer
-3. Stores the AI verdict in the database
-4. Updates claim status to 'ai_approved'
-
-**Disclaimer**: All AI responses include: *"This is an AI-generated response. CRECO is not responsible for any implications. Please verify with fact-checkers."*
-
-### Responsibility Tracking
-- **AI-only verdicts**: Responsibility = `ai` (CRECO not responsible)
-- **Edited by fact-checker**: Responsibility = `creco` (CRECO responsible)
+## Authentication
+All authenticated endpoints require a Bearer token in the Authorization header:
+```
+Authorization: Bearer <your_jwt_token>
+```
 
 ---
 
-## 📋 Claim Endpoints
+## 1. Authentication Endpoints
 
-### 1. Submit Claim (with Auto AI Processing)
-**POST** `/api/claims/submit`
+### 1.1 Register User
+**POST** `/auth/register`
 
-**Authentication**: Required (JWT token)
+Register a new user account.
 
-**Request Body**:
+**Request Body:**
 ```json
 {
-  "category": "politics",
-  "claimText": "The claim text to verify",
-  "videoLink": "optional video URL",
-  "sourceLink": "optional source URL",
-  "imageUrl": "optional image URL"
+  "email": "user@example.com",
+  "username": "johndoe",
+  "password": "securePassword123",
+  "full_name": "John Doe",
+  "phone_number": "+254700000000",
+  "country": "Kenya"
 }
 ```
 
-**Response** (201):
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Registration successful",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "username": "johndoe",
+    "full_name": "John Doe",
+    "role": "user",
+    "phone_number": "+254700000000",
+    "country": "Kenya"
+  },
+  "token": "jwt_token_here"
+}
+```
+
+**Status Codes:**
+- 201: Successfully created
+- 400: Validation error
+- 409: Email or username already exists
+
+---
+
+### 1.2 Login
+**POST** `/auth/login`
+
+Login with email/username and password.
+
+**Request Body:**
+```json
+{
+  "identifier": "user@example.com",  // Can be email OR username
+  "password": "securePassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "username": "johndoe",
+    "full_name": "John Doe",
+    "role": "user",
+    "phone_number": "+254700000000",
+    "country": "Kenya"
+  },
+  "token": "jwt_token_here"
+}
+```
+
+**Status Codes:**
+- 200: Success
+- 401: Invalid credentials
+- 403: Account pending approval (for fact checkers)
+
+---
+
+### 1.3 Reset Password
+**POST** `/auth/reset-password`
+
+Reset user password (admin only).
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "new_password": "newSecurePassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+```
+
+---
+
+## 2. AI Endpoints
+
+### 2.1 AI Chat
+**POST** `/ai/chat`
+
+Send a message to the AI fact-checking assistant.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "prompt": "Is it true that vaccines cause autism?",
+  "hasAttachments": false,
+  "attachmentTypes": []
+}
+```
+
+**With Attachments:**
+```json
+{
+  "prompt": "Can you verify this claim?",
+  "hasAttachments": true,
+  "attachmentTypes": ["image", "file"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "response": "Based on extensive scientific research...",
+  "sources": [
+    {
+      "title": "WHO Vaccine Safety",
+      "url": "https://who.int/vaccine-safety"
+    }
+  ],
+  "confidence": 0.95
+}
+```
+
+**Status Codes:**
+- 200: Success
+- 400: Invalid request
+- 401: Unauthorized
+- 429: Rate limit exceeded
+
+---
+
+### 2.2 AI Fact Check (Instant Verdict)
+**POST** `/ai/fact-check`
+
+Get an instant AI-powered fact check verdict for a claim.
+
+**Request Body:**
+```json
+{
+  "claim": "The Earth is flat",
+  "category": "Science",
+  "context": "Additional context about the claim"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "verdict": "false",
+  "confidence": 0.98,
+  "explanation": "The Earth is scientifically proven to be an oblate spheroid...",
+  "sources": [
+    {
+      "title": "NASA - Earth Science",
+      "url": "https://nasa.gov/earth"
+    }
+  ],
+  "disclaimer": "This is an AI-generated response. For official verification, please wait for our fact-checkers to review."
+}
+```
+
+**Verdict Types:**
+- `verified`: Claim is true
+- `false`: Claim is false
+- `misleading`: Claim contains misleading information
+- `needs_context`: Claim requires additional context
+- `unverifiable`: Cannot be verified with available information
+
+---
+
+## 3. User Endpoints
+
+### 3.1 Get User Profile
+**GET** `/users/profile`
+
+Get the authenticated user's profile.
+
+**Response:**
+```json
+{
+  "success": true,
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "username": "johndoe",
+    "full_name": "John Doe",
+    "phone_number": "+254700000000",
+    "country": "Kenya",
+    "role": "user",
+    "profile_picture": "https://cdn.example.com/profile.jpg",
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+---
+
+### 3.2 Update User Profile
+**PUT** `/users/profile`
+
+Update the authenticated user's profile.
+
+**Request Body:**
+```json
+{
+  "full_name": "John Updated Doe",
+  "phone_number": "+254711111111",
+  "country": "Kenya",
+  "profile_picture": "base64_encoded_image_or_url"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "user": { /* updated user object */ }
+}
+```
+
+---
+
+## 4. Claims Endpoints
+
+### 4.1 Get All Claims
+**GET** `/claims`
+
+Get a list of all claims.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `status` (optional): Filter by status (verified, false, pending, etc.)
+- `category` (optional): Filter by category
+
+**Response:**
+```json
+{
+  "success": true,
+  "claims": [
+    {
+      "id": "uuid",
+      "title": "Claim title",
+      "description": "Claim description",
+      "category": "Politics",
+      "status": "verified",
+      "submitted_by": "user_id",
+      "submitted_date": "2024-01-15T10:30:00Z",
+      "verified_date": "2024-01-16T14:20:00Z",
+      "fact_checker": "fact_checker_id",
+      "ai_verdict": {
+        "verdict": "verified",
+        "confidence": 0.85,
+        "explanation": "Brief explanation..."
+      }
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_items": 100
+  }
+}
+```
+
+---
+
+### 4.2 Submit Claim
+**POST** `/claims/submit`
+
+Submit a new claim for verification.
+
+**Request Body:**
+```json
+{
+  "title": "Claim title",
+  "description": "Detailed description of the claim",
+  "category": "Politics",
+  "sources": [
+    {
+      "title": "Source title",
+      "url": "https://source.com"
+    }
+  ]
+}
+```
+
+**Response:**
 ```json
 {
   "success": true,
   "message": "Claim submitted successfully",
   "claim": {
     "id": "uuid",
-    "category": "politics",
-    "status": "ai_approved",
-    "submittedDate": "2024-01-01T00:00:00Z"
-  },
-  "pointsAwarded": 10,
-  "isFirstClaim": false
-}
-```
-
-**What Happens Automatically**:
-1. Claim is saved to database
-2. AI processes the claim using Poe AI Web-Search
-3. AI verdict is saved with disclaimer
-4. Claim status updated to 'ai_approved'
-5. User receives points
-
----
-
-### 2. Get My Claims
-**GET** `/api/claims/my`
-
-**Authentication**: Required
-
-**Query Parameters**:
-- `status` (optional): Filter by status (pending, ai_approved, human_approved, etc.)
-
-**Response**:
-```json
-{
-  "success": true,
-  "claims": [
-    {
-      "id": "uuid",
-      "title": "Claim title",
-      "category": "politics",
-      "status": "ai_approved",
-      "submittedDate": "2024-01-01",
-      "verdictDate": null,
-      "verdict": "needs_context",
-      "verdictText": "AI explanation...",
-      "sources": [],
-      "factCheckerName": "Fact Checker"
-    }
-  ]
-}
-```
-
----
-
-### 3. Get Claim Details
-**GET** `/api/claims/:claimId`
-
-**Authentication**: Required
-
-**Response**:
-```json
-{
-  "success": true,
-  "claim": {
-    "id": "uuid",
     "title": "Claim title",
-    "description": "Full claim description",
-    "category": "politics",
-    "status": "ai_approved",
-    "submittedBy": "user@example.com",
-    "submittedDate": "2024-01-01T00:00:00Z",
-    "verdictDate": null,
-    "verdict": "needs_context",
-    "human_verdict": null,
-    "ai_verdict": "needs_context",
-    "verdictText": "AI explanation...",
-    "human_explanation": null,
-    "ai_explanation": "AI explanation with sources...",
-    "sources": [
-      {
-        "title": "Source name",
-        "url": "https://source.com",
-        "type": "ai"
-      }
-    ],
-    "ai_disclaimer": "This is an AI-generated response. CRECO is not responsible...",
-    "ai_edited": false,
-    "verdict_responsibility": "ai",
-    "ai_confidence": 0.75,
-    "factChecker": {
-      "name": "Fact Checker",
-      "email": null,
-      "avatar": null
-    },
-    "imageUrl": null,
-    "videoLink": null
+    "status": "pending",
+    "submitted_date": "2024-01-15T10:30:00Z"
+  },
+  "ai_verdict": {
+    "verdict": "pending",
+    "confidence": 0.65,
+    "explanation": "Initial AI analysis...",
+    "disclaimer": "This is an AI-generated response. Official verification pending."
   }
 }
 ```
 
 ---
 
-## 🔍 Fact Checker Endpoints
+## 5. Admin Endpoints
 
-### 4. Get Pending Claims (with AI Suggestions)
-**GET** `/api/fact-checker/pending-claims`
+### 5.1 Get Dashboard Stats
+**GET** `/admin/dashboard/stats`
 
-**Authentication**: Required (Fact Checker role)
+Get overview statistics for the admin dashboard.
 
-**Response**:
-```json
-{
-  "success": true,
-  "claims": [
-    {
-      "id": "uuid",
-      "title": "Claim title",
-      "description": "Full description",
-      "category": "politics",
-      "submittedBy": "user@example.com",
-      "submittedDate": "2024-01-01",
-      "imageUrl": null,
-      "videoLink": null,
-      "sourceLink": null,
-      "ai_suggestion": {
-        "verdict": "needs_context",
-        "explanation": "AI analysis of the claim...",
-        "confidence": 0.75,
-        "sources": [],
-        "disclaimer": "This is an AI-generated response. CRECO is not responsible...",
-        "isEdited": false
-      }
-    }
-  ]
-}
+**Headers:**
+```
+Authorization: Bearer <admin_token>
 ```
 
----
-
-### 5. Submit New Verdict (Manual Fact Check)
-**POST** `/api/fact-checker/submit-verdict`
-
-**Authentication**: Required (Fact Checker role)
-
-**Request Body**:
-```json
-{
-  "claimId": "uuid",
-  "verdict": "verified",
-  "explanation": "Detailed explanation by fact checker",
-  "sources": [
-    {
-      "title": "Source name",
-      "url": "https://source.com"
-    }
-  ],
-  "time_spent": 300
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Verdict submitted successfully",
-  "verdictId": "uuid"
-}
-```
-
-**Notes**:
-- This creates a **new** verdict from scratch (not based on AI)
-- Responsibility automatically set to 'creco'
-- Claim status updated to 'human_approved'
-
----
-
-### 6. Approve/Edit AI Verdict
-**POST** `/api/fact-checker/approve-ai-verdict`
-
-**Authentication**: Required (Fact Checker role)
-
-**Request Body** (Approve without changes):
-```json
-{
-  "claimId": "uuid",
-  "approved": true
-}
-```
-
-**Request Body** (Edit AI verdict):
-```json
-{
-  "claimId": "uuid",
-  "approved": false,
-  "editedVerdict": "misleading",
-  "editedExplanation": "Updated explanation by fact checker",
-  "additionalSources": [
-    {
-      "title": "Additional source",
-      "url": "https://newsource.com"
-    }
-  ]
-}
-```
-
-**Response** (Approved without changes):
-```json
-{
-  "success": true,
-  "message": "AI verdict approved without changes.",
-  "responsibility": "ai"
-}
-```
-
-**Response** (Edited):
-```json
-{
-  "success": true,
-  "message": "Verdict edited and approved. CRECO is now responsible.",
-  "responsibility": "creco"
-}
-```
-
-**What Happens**:
-- If approved without changes: Responsibility stays `ai`
-- If edited in any way: 
-  - AI verdict marked as `is_edited_by_human = true`
-  - Responsibility changed to `creco`
-  - Fact checker ID recorded as editor
-  - Edit timestamp recorded
-
----
-
-### 7. Get AI Suggestions
-**GET** `/api/fact-checker/ai-suggestions`
-
-**Authentication**: Required (Fact Checker role)
-
-**Response**:
-```json
-{
-  "success": true,
-  "claims": [
-    {
-      "id": "uuid",
-      "title": "Claim title",
-      "description": "Description",
-      "category": "politics",
-      "submittedBy": "user-id",
-      "submittedDate": "2024-01-01",
-      "aiSuggestion": {
-        "status": "needs_context",
-        "verdict": "AI analysis...",
-        "confidence": 0.75,
-        "sources": []
-      }
-    }
-  ]
-}
-```
-
----
-
-### 8. Get Fact Checker Stats
-**GET** `/api/fact-checker/stats`
-
-**Authentication**: Required (Fact Checker role)
-
-**Response**:
+**Response:**
 ```json
 {
   "success": true,
   "stats": {
-    "totalVerified": 25,
-    "pendingReview": 10,
-    "timeSpent": "15 minutes avg",
-    "accuracy": "92%"
+    "totalUsers": 1250,
+    "totalClaims": 450,
+    "pendingClaims": 23,
+    "verifiedClaims": 380,
+    "falseClaims": 47,
+    "factCheckers": 15,
+    "admins": 3,
+    "totalBlogs": 67
   }
 }
 ```
 
 ---
 
-## 🔐 Authentication Endpoints
+### 5.2 Register Fact Checker
+**POST** `/admin/users/register-fact-checker`
 
-### 9. Register User
-**POST** `/api/auth/register`
+Register a new fact checker (admin only).
 
-**Request Body**:
-```json
-{
-  "email": "user@example.com",
-  "password": "securepassword",
-  "username": "username",
-  "phone": "+254712345678",
-  "country": "Kenya"
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Registration successful",
-  "token": "jwt-token",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "username": "username",
-    "role": "user"
-  }
-}
-```
-
----
-
-### 10. Login
-**POST** `/api/auth/login`
-
-**Request Body**:
-```json
-{
-  "identifier": "user@example.com OR username",
-  "password": "securepassword"
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "token": "jwt-token",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "username": "username",
-    "role": "user"
-  }
-}
-```
-
----
-
-### 11. Register Fact Checker
-**POST** `/api/admin/register-fact-checker`
-
-**Authentication**: Required (Admin role)
-
-**Request Body**:
+**Request Body:**
 ```json
 {
   "email": "checker@example.com",
-  "password": "securepassword",
   "username": "factchecker1",
-  "phone": "+254712345678",
+  "full_name": "Jane Checker",
+  "password": "securePassword123",
+  "phone_number": "+254722222222",
   "country": "Kenya",
-  "specialization": "politics"
+  "specialization": "Politics"
 }
 ```
 
-**Response**:
+**Response:**
 ```json
 {
   "success": true,
   "message": "Fact checker registered successfully",
-  "factChecker": {
+  "user": {
     "id": "uuid",
     "email": "checker@example.com",
     "username": "factchecker1",
-    "role": "fact_checker"
+    "role": "fact_checker",
+    "status": "active"
   }
 }
 ```
 
 ---
 
-## 🤖 AI Service Endpoints
+### 5.3 Register Admin
+**POST** `/admin/users/register-admin`
 
-### 12. AI Chat
-**POST** `/api/ai/chat`
+Register a new admin (admin only).
 
-**Authentication**: Required
-
-**Request Body**:
+**Request Body:**
 ```json
 {
-  "prompt": "What is the process for fact-checking?",
-  "hasAttachments": false,
-  "attachmentTypes": []
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "response": "AI response text...\n\n⚠️ This response is AI-generated. CRECO is not responsible for any implications. Please verify important information.",
-  "model": "Web-Search",
-  "timestamp": "2024-01-01T00:00:00Z"
+  "email": "admin@example.com",
+  "username": "admin1",
+  "full_name": "Admin User",
+  "password": "securePassword123",
+  "phone_number": "+254733333333",
+  "country": "Kenya"
 }
 ```
 
 ---
 
-### 13. AI Fact Check (Direct)
-**POST** `/api/ai/fact-check`
+### 5.4 Get All Users
+**GET** `/admin/users`
 
-**Authentication**: Required
+Get a list of all users.
 
-**Request Body**:
-```json
-{
-  "claimText": "The claim to verify",
-  "category": "politics",
-  "sourceLink": "https://source.com"
-}
-```
-
-**Response**:
+**Response:**
 ```json
 {
   "success": true,
-  "aiVerdict": {
-    "verdict": "needs_context",
-    "explanation": "Detailed AI analysis...",
-    "confidence": "medium",
-    "timestamp": "2024-01-01T00:00:00Z"
-  },
-  "disclaimer": "This is an AI-generated preliminary verdict. Human fact-checkers will review this claim."
+  "users": [
+    {
+      "id": "uuid",
+      "username": "johndoe",
+      "email": "user@example.com",
+      "phone": "+254700000000",
+      "role": "user",
+      "status": "active",
+      "lastActive": "2024-01-20T15:30:00Z",
+      "joinDate": "2024-01-15T10:30:00Z"
+    }
+  ]
 }
 ```
 
 ---
 
-### 14. AI Health Check
-**GET** `/api/ai/health`
+### 5.5 User Action
+**POST** `/admin/users/action`
 
-**Authentication**: Not required
+Perform actions on users (suspend, activate, delete).
 
-**Response**:
+**Request Body:**
+```json
+{
+  "userId": "uuid",
+  "action": "suspend"  // or "activate" or "delete"
+}
+```
+
+**Response:**
 ```json
 {
   "success": true,
-  "status": "healthy",
-  "message": "AI service is operational",
-  "timestamp": "2024-01-01T00:00:00Z"
+  "message": "User suspended successfully"
 }
 ```
 
 ---
 
-## 📊 Database Schema Updates
+### 5.6 Get Fact Checker Activity
+**GET** `/admin/dashboard/fact-checker-activity`
 
-### AI Verdicts Table
-```sql
-CREATE TABLE hakikisha.ai_verdicts (
-  id UUID PRIMARY KEY,
-  claim_id UUID REFERENCES hakikisha.claims(id),
-  verdict VARCHAR(20),
-  confidence_score FLOAT,
-  explanation TEXT,
-  evidence_sources JSONB,
-  ai_model_version VARCHAR(50),
-  disclaimer TEXT DEFAULT 'This is an AI-generated response. CRECO is not responsible...',
-  is_edited_by_human BOOLEAN DEFAULT false,
-  edited_by_fact_checker_id UUID REFERENCES hakikisha.users(id),
-  edited_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE,
-  updated_at TIMESTAMP WITH TIME ZONE
-);
-```
+Get detailed activity data for fact checkers.
 
-### Verdicts Table (Human)
-```sql
-CREATE TABLE hakikisha.verdicts (
-  id UUID PRIMARY KEY,
-  claim_id UUID REFERENCES hakikisha.claims(id),
-  fact_checker_id UUID REFERENCES hakikisha.users(id),
-  verdict VARCHAR(20),
-  explanation TEXT,
-  evidence_sources JSONB,
-  ai_verdict_id UUID REFERENCES hakikisha.ai_verdicts(id),
-  based_on_ai_verdict BOOLEAN DEFAULT false,
-  responsibility VARCHAR(50) CHECK (responsibility IN ('ai', 'creco')) DEFAULT 'creco',
-  time_spent INTEGER,
-  is_final BOOLEAN DEFAULT true,
-  approval_status VARCHAR(20),
-  created_at TIMESTAMP WITH TIME ZONE
-);
+**Response:**
+```json
+{
+  "success": true,
+  "activity": [
+    {
+      "id": "uuid",
+      "username": "factchecker1",
+      "email": "checker@example.com",
+      "phone": "+254722222222",
+      "claimsVerified": 45,
+      "timeSpent": "120 hours",
+      "lastActive": "2024-01-20T15:30:00Z",
+      "accuracy": "95%",
+      "blogsWritten": 12
+    }
+  ]
+}
 ```
 
 ---
 
-## 🔄 Workflow Summary
+## 6. Blog Endpoints
 
-### User Submits Claim
-1. User submits claim via mobile app
-2. **Backend automatically calls Poe AI**
-3. AI verdict saved with disclaimer
-4. User can immediately see AI response
-5. Claim enters fact-checker queue
+### 6.1 Get All Blogs
+**GET** `/blogs`
 
-### Fact Checker Reviews
-1. Fact checker sees claim with AI suggestion
-2. Can choose to:
-   - **Approve AI verdict** (responsibility stays 'ai')
-   - **Edit AI verdict** (responsibility changes to 'creco')
-   - **Create new verdict** (responsibility is 'creco')
+Get a list of all blog posts.
 
-### User Sees Result
-1. AI verdict shown immediately with disclaimer
-2. When fact checker edits/approves:
-   - If unchanged: Still shows AI disclaimer
-   - If edited: Shows CRECO takes responsibility
+**Response:**
+```json
+{
+  "success": true,
+  "blogs": [
+    {
+      "id": "uuid",
+      "title": "Blog title",
+      "category": "Politics",
+      "excerpt": "Brief excerpt...",
+      "content": "Full content...",
+      "publishedBy": "author_id",
+      "publishDate": "2024-01-15T10:30:00Z",
+      "views": 1250,
+      "likes": 89
+    }
+  ]
+}
+```
 
 ---
 
-## ⚙️ Configuration
+## 7. File Upload Endpoints
 
-### Environment Variables
+### 7.1 Upload File
+**POST** `/uploads/file`
+
+Upload files for AI analysis (images, documents).
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Request:**
+```
+FormData:
+- file: <binary_file>
+- type: "image" | "document"
+- context: "Optional context about the file"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "file": {
+    "id": "uuid",
+    "url": "https://cdn.example.com/uploads/file.jpg",
+    "type": "image",
+    "size": 1024000,
+    "uploadedAt": "2024-01-20T15:30:00Z"
+  }
+}
+```
+
+---
+
+## Rate Limits
+
+| Endpoint Type | Limit |
+|--------------|-------|
+| Authentication | 5 requests/minute |
+| AI Chat | 10 requests/minute |
+| General API | 60 requests/minute |
+| File Upload | 5 uploads/minute |
+
+---
+
+## Error Responses
+
+All endpoints return errors in this format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "details": { /* additional error details */ }
+  }
+}
+```
+
+**Common Error Codes:**
+- `AUTH_FAILED`: Authentication failed
+- `UNAUTHORIZED`: Insufficient permissions
+- `VALIDATION_ERROR`: Request validation failed
+- `NOT_FOUND`: Resource not found
+- `RATE_LIMIT_EXCEEDED`: Too many requests
+- `SERVER_ERROR`: Internal server error
+
+---
+
+## Security Best Practices
+
+1. **Always use HTTPS** for all API requests
+2. **Store JWT tokens securely** in encrypted storage
+3. **Never log sensitive data** (passwords, tokens)
+4. **Validate all inputs** on both client and server
+5. **Implement rate limiting** to prevent abuse
+6. **Use environment variables** for API keys
+
+---
+
+## Implementation Guide
+
+### Setting Up the Backend
+
+1. **Choose a backend framework:**
+   - Node.js + Express
+   - Python + FastAPI
+   - Ruby on Rails
+   - Django
+
+2. **Set up database:**
+   - PostgreSQL (recommended)
+   - MySQL
+   - MongoDB
+
+3. **Configure environment variables:**
 ```env
+DATABASE_URL=your_database_url
+JWT_SECRET=your_jwt_secret
 POE_API_KEY=ZceEiyLZg4JbvhV8UDpnY0rMT037Pi4QIhdPy4pirRA
-AI_MODEL=Web-Search
-JWT_SECRET=your-jwt-secret
-DATABASE_URL=your-database-url
+API_BASE_URL=https://api.poe.com/v1
 ```
 
-### POE AI Configuration
-- **Model**: Web-Search
-- **API Base URL**: https://api.poe.com/v1
-- **Library**: OpenAI SDK (compatible)
+4. **Install dependencies:**
+```bash
+# For Node.js
+npm install express cors helmet bcrypt jsonwebtoken openai
+
+# For Python
+pip install fastapi uvicorn pydantic openai
+```
+
+5. **Implement authentication middleware**
+6. **Set up database migrations**
+7. **Configure CORS for mobile app**
+8. **Deploy to cloud provider** (AWS, Heroku, DigitalOcean)
 
 ---
 
-## 📝 Notes
+## Testing
 
-- All AI responses include disclaimers
-- Responsibility tracking is automatic
-- Fact checkers can see AI suggestions immediately
-- Users get instant AI feedback
-- Human review adds CRECO responsibility
-- Phone numbers include country codes automatically
-- Country selection from full country list
+Use tools like Postman or curl to test endpoints:
+
+```bash
+# Login example
+curl -X POST https://your-api.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"identifier":"user@example.com","password":"password123"}'
+
+# Get user profile
+curl -X GET https://your-api.com/api/v1/users/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+---
+
+## Support
+
+For backend implementation support, contact: support@hakikisha.app
