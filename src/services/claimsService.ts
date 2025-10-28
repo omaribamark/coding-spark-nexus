@@ -155,18 +155,19 @@ class ClaimsService {
     }
   }
 
-  // Poll for AI verdict after claim submission
-  async pollForAIVerdict(claimId: string, maxAttempts: number = 10, delayMs: number = 1000): Promise<Claim> {
+  // Poll for AI verdict after claim submission (fast polling for instant feedback)
+  async pollForAIVerdict(claimId: string, maxAttempts: number = 6, delayMs: number = 300): Promise<Claim> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const claim = await this.getClaimById(claimId);
         
         // Check if AI verdict is ready
         if (claim.ai_verdict && claim.ai_verdict.explanation) {
+          console.log('✅ AI verdict ready!');
           return claim;
         }
         
-        // Wait before next attempt
+        // Wait before next attempt (faster polling)
         if (attempt < maxAttempts - 1) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
@@ -176,6 +177,7 @@ class ClaimsService {
     }
     
     // Return the claim even if AI verdict isn't ready
+    console.log('⚠️ AI verdict not ready after polling, returning claim anyway');
     return this.getClaimById(claimId);
   }
 
@@ -188,7 +190,10 @@ class ClaimsService {
     const hasHumanReview = claim.verdict || claim.verdictText || claim.human_explanation || claim.verdictDate;
     
     // Priority: Human review overrides AI verdict
-    if (hasHumanReview && claim.status === 'pending') {
+    if (hasHumanReview) {
+      // Mark that it's been reviewed by human
+      claim.verified_by_ai = false;
+      
       if (claim.verdict) {
         switch (claim.verdict) {
           case 'true':
@@ -210,7 +215,7 @@ class ClaimsService {
       }
     }
     // If no human review but AI verdict exists, show AI verdict
-    else if (hasAIVerdict && claim.status === 'pending') {
+    else if (hasAIVerdict) {
       claim.status = 'ai_verified';
       claim.verified_by_ai = true;
       
@@ -222,11 +227,11 @@ class ClaimsService {
       // Set verdict from AI verdict if not already set
       if (claim.ai_verdict.verdict && !claim.verdict) {
         const aiVerdictLower = claim.ai_verdict.verdict.toLowerCase();
-        if (aiVerdictLower.includes('true') || aiVerdictLower.includes('correct')) {
+        if (aiVerdictLower.includes('true') || aiVerdictLower.includes('correct') || aiVerdictLower.includes('accurate')) {
           claim.verdict = 'true';
-        } else if (aiVerdictLower.includes('false') || aiVerdictLower.includes('incorrect')) {
+        } else if (aiVerdictLower.includes('false') || aiVerdictLower.includes('incorrect') || aiVerdictLower.includes('inaccurate')) {
           claim.verdict = 'false';
-        } else if (aiVerdictLower.includes('misleading')) {
+        } else if (aiVerdictLower.includes('misleading') || aiVerdictLower.includes('partial')) {
           claim.verdict = 'misleading';
         } else {
           claim.verdict = 'needs_context';

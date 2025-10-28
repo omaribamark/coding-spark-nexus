@@ -302,7 +302,9 @@ const HomeTab: React.FC<Props> = (props: Props) => {
                   <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-xs font-pmedium`}>
                     {claim.verdictDate 
                       ? `Verified: ${formatDate(claim.verdictDate)}` 
-                      : 'Under Review'}
+                      : (claim.verified_by_ai || claim.status === 'ai_verified' || claim.ai_verdict)
+                        ? `🤖 AI Verified`
+                        : 'Under Review'}
                   </Text>
                 </View>
                 <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-xs font-pregular`}>

@@ -48,9 +48,9 @@ const SubmitClaimScreen = (props: Props) => {
         throw new Error('No claim ID returned from server');
       }
 
-      // Poll for AI verdict (max 10 seconds)
-      console.log('Waiting for AI verdict...');
-      const claimWithVerdict = await claimsService.pollForAIVerdict(claimId, 10, 1000);
+      // Poll for AI verdict (faster: max 1.8 seconds with 300ms intervals)
+      console.log('⏳ Waiting for AI verdict...');
+      const claimWithVerdict = await claimsService.pollForAIVerdict(claimId, 6, 300);
       
       setIsSubmitting(false);
       
