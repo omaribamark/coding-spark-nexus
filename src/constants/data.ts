@@ -12,9 +12,9 @@ const randomImage = (): string =>
 const SplashData: SplashTypes[] = [
   {
     image: images.splash1,
-    title: 'Combat Misinformation',
+    title: 'STOP.REFLECT.VERIFY',
     description:
-      'Submit suspicious claims and get verified facts from professional fact-checkers',
+      '',
   },
   {
     image: images.splash2,

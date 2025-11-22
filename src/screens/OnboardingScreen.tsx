@@ -11,7 +11,27 @@ import { RouteStackParamList } from '../../App';
 type Props = {};
 export type RootStackParamList = {
   Login: { id: number } | undefined;
+};
 
+// Custom Title Component
+const CustomTitle = ({ title }: { title: string }) => {
+  if (title === 'STOP.REFLECT.VERIFY') {
+    return (
+      <Text className="text-2xl font-pbold text-gray-900 text-center px-6">
+        <Text style={{ color: '#EF9334' }}>STOP</Text>
+        <Text>.</Text>
+        <Text style={{ color: '#0A864D' }}>REFLECT</Text>
+        <Text>.</Text>
+        <Text style={{ color: '#EF9334' }}>VERIFY</Text>
+      </Text>
+    );
+  }
+
+  return (
+    <Text className="text-2xl font-pbold text-gray-900 text-center px-6">
+      {title}
+    </Text>
+  );
 };
 
 const OnboardingScreen = (props: Props) => {
@@ -31,21 +51,10 @@ const OnboardingScreen = (props: Props) => {
           {
             backgroundColor: '#fff',
             image: <Image source={SplashData[0].image} />,
-            title: <Text className="text-2xl font-pbold text-gray-900 text-center px-6">{SplashData[0].title}</Text>,
+            title: <CustomTitle title={SplashData[0].title} />,
             subtitle: <Text className="text-base font-pregular text-gray-600 text-center px-8 mt-2">{SplashData[0].description}</Text>,
           },
-          {
-            backgroundColor: '#fff',
-            image: <Image source={SplashData[1].image} />,
-            title: <Text className="text-2xl font-pbold text-gray-900 text-center px-6">{SplashData[1].title}</Text>,
-            subtitle: <Text className="text-base font-pregular text-gray-600 text-center px-8 mt-2">{SplashData[1].description}</Text>,
-          },
-          {
-            backgroundColor: '#fff',
-            image: <Image source={SplashData[2].image} />,
-            title: <Text className="text-2xl font-pbold text-gray-900 text-center px-6">{SplashData[2].title}</Text>,
-            subtitle: <Text className="text-base font-pregular text-gray-600 text-center px-8 mt-2">{SplashData[2].description}</Text>,
-          },
+          // Removed the other two pages
         ]}
       />
     </View>

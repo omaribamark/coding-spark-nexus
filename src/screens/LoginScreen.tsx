@@ -15,17 +15,90 @@ import {
 import {CustomButton} from '../components';
 import LineInputField from '../components/LineInputField';
 import { authService } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type RootStackParamList = {
-  ForgotPassword: undefined;
-  Signup: undefined;
-  HomeScreen: undefined;
-  AdminDashboard: undefined;
-  FactCheckerDashboard: undefined;
+// Storage keys - must match the FactCheckerDashboard
+const AUTH_TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+const USER_DATA_KEY = 'user_data';
+
+// Enhanced token storage utility
+const AuthStorage = {
+  // Store all auth data
+  setAuthData: async (token: string, refreshToken: string, user: any) => {
+    try {
+      console.log('💾 Storing auth data...', {
+        token: token ? 'Yes' : 'No',
+        refreshToken: refreshToken ? 'Yes' : 'No',
+        user: user ? user.role : 'No'
+      });
+      
+      await AsyncStorage.multiSet([
+        [AUTH_TOKEN_KEY, token],
+        [REFRESH_TOKEN_KEY, refreshToken || ''], // Handle case where refreshToken might be undefined
+        [USER_DATA_KEY, JSON.stringify(user)]
+      ]);
+      console.log('✅ Auth data stored successfully');
+    } catch (error) {
+      console.error('❌ Error storing auth data:', error);
+      throw error;
+    }
+  },
+
+  // Get auth token
+  getAuthToken: async (): Promise<string | null> => {
+    try {
+      const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      console.log('🔑 Retrieved auth token:', token ? 'Yes' : 'No');
+      return token;
+    } catch (error) {
+      console.error('❌ Error getting auth token:', error);
+      return null;
+    }
+  },
+
+  // Get refresh token
+  getRefreshToken: async (): Promise<string | null> => {
+    try {
+      const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+      console.log('🔄 Retrieved refresh token:', refreshToken ? 'Yes' : 'No');
+      return refreshToken;
+    } catch (error) {
+      console.error('❌ Error getting refresh token:', error);
+      return null;
+    }
+  },
+
+  // Get user data
+  getUserData: async (): Promise<any> => {
+    try {
+      const userData = await AsyncStorage.getItem(USER_DATA_KEY);
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('❌ Error getting user data:', error);
+      return null;
+    }
+  },
+
+  // Clear all auth data
+  clearAuthData: async () => {
+    try {
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
+      console.log('✅ Auth data cleared');
+    } catch (error) {
+      console.error('❌ Error clearing auth data:', error);
+    }
+  },
+
+  // Check if user is authenticated
+  isAuthenticated: async (): Promise<boolean> => {
+    const token = await AuthStorage.getAuthToken();
+    return !!token;
+  }
 };
 
 const LoginScreen = () => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation();
   const [identifierError, setIdentifierError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,79 +113,125 @@ const LoginScreen = () => {
 
   const checkExistingAuth = async () => {
     try {
-      console.log('Checking existing authentication...');
-      const authData = await authService.getStoredAuthData();
-      if (authData) {
-        console.log('Found existing auth data:', authData.user);
-        redirectBasedOnRole(authData.user);
+      console.log('🔍 Checking existing authentication...');
+      const token = await AuthStorage.getAuthToken();
+      const userData = await AuthStorage.getUserData();
+      
+      console.log('🔍 Auth check results:', {
+        hasToken: !!token,
+        hasUserData: !!userData,
+        userRole: userData?.role
+      });
+      
+      if (token && userData) {
+        console.log('✅ Found existing auth data:', userData);
+        redirectBasedOnRole(userData);
       } else {
-        console.log('No existing auth data found');
+        console.log('❌ No existing auth data found');
       }
     } catch (error) {
-      console.error('Error checking existing auth:', error);
+      console.error('❌ Error checking existing auth:', error);
     } finally {
       setIsCheckingAuth(false);
     }
   };
 
   const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
+    navigation.navigate('ForgotPassword' as never);
   };
 
   const handleLogin = async () => {
-    if (!identifier || !password) {
-      Alert.alert('Error', 'Please enter email/username and password');
+    const trimmedIdentifier = identifier.trim();
+    const trimmedPassword = password.trim();
+    
+    if (!trimmedIdentifier) {
+      setIdentifierError('Email or username is required');
+      return;
+    }
+    
+    if (!trimmedPassword) {
+      setPasswordError('Password is required');
       return;
     }
 
     setIsSubmitting(true);
     
     try {
-      console.log('Starting login process...');
+      console.log('🚀 Starting login process...');
       const data = await authService.login({
-        email: identifier,
-        password: password,
+        identifier: trimmedIdentifier,
+        password: trimmedPassword,
       });
       
-      console.log('Login successful:', data.user);
+      // Check if 2FA is required
+      if (data.requires2FA) {
+        console.log('🔐 2FA required for:', data.role);
+        (navigation as any).navigate('TwoFactorAuth', {
+          userId: data.userId,
+          email: data.email,
+          role: data.role,
+        });
+        return;
+      }
+      
+      // FIXED: Store tokens immediately after successful login
+      console.log('✅ Login successful, storing tokens...');
+      const refreshToken = (data as any).refresh_token || (data as any).refreshToken || '';
+      await AuthStorage.setAuthData(data.token || '', refreshToken, data.user);
+      
+      console.log('🎯 Redirecting to dashboard...');
       redirectBasedOnRole(data.user);
-      setIsSubmitting(false);
       
     } catch (error: any) {
-      setIsSubmitting(false);
-      console.error('Login failed:', error?.message);
+      console.error('❌ Login failed:', error?.message);
       
       let errorMessage = error?.message || 'Login failed. Please check your credentials.';
       
-      if (errorMessage.includes('Network Error') || errorMessage.includes('timeout')) {
+      if (errorMessage.includes('verify your email')) {
+        errorMessage = 'Please verify your email before logging in. Check your inbox for the verification code.';
+      } else if (errorMessage.includes('Network Error') || errorMessage.includes('timeout')) {
         errorMessage = 'Cannot connect to server. Please check your internet connection and try again.';
-      } else if (errorMessage.includes('401')) {
-        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (errorMessage.includes('401') || errorMessage.includes('Invalid credentials')) {
+        errorMessage = 'Invalid email/username or password. Please check your credentials.';
       } else if (errorMessage.includes('pending approval')) {
         errorMessage = 'Your account is pending admin approval. Please wait for approval or contact support.';
+      } else if (errorMessage.includes('suspended')) {
+        errorMessage = 'Your account has been suspended. Please contact support.';
       }
       
       Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-
   const redirectBasedOnRole = (user: any) => {
-    console.log('Redirecting based on role:', user.role);
+    console.log('🎯 Redirecting based on role:', user.role);
+    
+    // Use reset to clear navigation stack and prevent going back to login
     switch (user.role) {
       case 'admin':
-        navigation.navigate('AdminDashboard');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'AdminDashboard' as never }],
+        });
         break;
       case 'fact_checker':
-        navigation.navigate('FactCheckerDashboard');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'FactCheckerDashboard' as never }],
+        });
         break;
       default:
-        navigation.navigate('HomeScreen');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'HomeScreen' as never }],
+        });
     }
   };
   
   const handleNavigateToSignUp = () => {
-    navigation.navigate('Signup');
+    navigation.navigate('Signup' as never);
   };
 
   const embassyImage = require('../assets/images/emabsy_of_finlad.png');
@@ -154,7 +273,7 @@ const LoginScreen = () => {
               title="Email or Username"
               value={identifier}
               placeholder="Enter your email or username"
-              onChangeText={(text: string) => {
+              onChangeText={(text) => {
                 setIdentifierError('');
                 setIdentifier(text);
               }}
@@ -169,7 +288,7 @@ const LoginScreen = () => {
               title="Password"
               value={password}
               placeholder="Enter your password"
-              onChangeText={(text: string) => {
+              onChangeText={(text) => {
                 setPasswordError('');
                 setPassword(text);
               }}

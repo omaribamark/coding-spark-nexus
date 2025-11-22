@@ -5,6 +5,8 @@ import CustomSearch from "./CustomSearch";
 import DetailsItem from "./DetailsItem";
 import CustomWrapper from "./CustomWrapper";
 import LineInputField from "./LineInputField";
+import NotificationBadge from "./NotificationBadge";
+import RichTextRenderer from "./RichTextRenderer";
 // to import it from ./components directly...
 export {
     CustomButton,
@@ -12,5 +14,7 @@ export {
     CustomSearch,
     DetailsItem,
     CustomWrapper,
-    LineInputField
+    LineInputField,
+    NotificationBadge,
+    RichTextRenderer
 }

@@ -4,6 +4,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Image,
+  Linking,
 } from 'react-native';
 import React from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -54,6 +56,27 @@ const BlogDetailScreen = (props: Props) => {
       </View>
 
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+        {/* Featured Image or Video */}
+        {(blog.featured_image || blog.video_url) && (
+          <View className="mb-4 -mx-6">
+            {blog.featured_image ? (
+              <Image 
+                source={{ uri: blog.featured_image }} 
+                className="w-full h-64"
+                resizeMode="cover"
+              />
+            ) : blog.video_url && (
+              <TouchableOpacity 
+                onPress={() => Linking.openURL(blog.video_url)}
+                className="w-full h-64 bg-gray-200 items-center justify-center"
+              >
+                <Text className="text-gray-600 text-5xl mb-2">▶️</Text>
+                <Text className="text-gray-600 font-pmedium">Tap to watch video</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Title - Minimal margin */}
         <Text className="text-2xl font-pbold text-gray-900 mb-1">
           {blog.title}

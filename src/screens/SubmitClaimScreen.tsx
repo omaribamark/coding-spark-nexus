@@ -34,32 +34,37 @@ const SubmitClaimScreen = (props: Props) => {
     setIsSubmitting(true);
     
     try {
-      await claimsService.submitClaim({
-        category: 'general', // Backend will handle categorization
+      const response = await claimsService.submitClaim({
+        category: 'general',
         claimText: claimText,
         videoLink: videoLink,
         sourceLink: sourceLink,
         imageUrl: imageUri || undefined,
       });
       
+      const claimId = response.claim?.id || response.claimId;
+      
+      if (!claimId) {
+        throw new Error('No claim ID returned from server');
+      }
+
+      // Poll for AI verdict (faster: max 1.8 seconds with 300ms intervals)
+      console.log('⏳ Waiting for AI verdict...');
+      const claimWithVerdict = await claimsService.pollForAIVerdict(claimId, 6, 300);
+      
       setIsSubmitting(false);
-      Alert.alert(
-        'Success',
-        'Your claim has been submitted for verification',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Reset form and navigate back
-              setClaimText('');
-              setVideoLink('');
-              setSourceLink('');
-              setImageUri(null);
-              navigation.navigate('Home', { refresh: true });
-            },
-          },
-        ],
-      );
+      
+      // Reset form
+      setClaimText('');
+      setVideoLink('');
+      setSourceLink('');
+      setImageUri(null);
+      
+      // Navigate to claim details to show AI verdict
+      navigation.navigate('ClaimDetails', { 
+        claimId: claimId,
+        claim: claimWithVerdict 
+      });
       
     } catch (error: any) {
       setIsSubmitting(false);
@@ -226,6 +231,23 @@ const SubmitClaimScreen = (props: Props) => {
             className="bg-gray-50 rounded-xl px-4 py-3 text-gray-900 font-pregular text-sm"
           />
         </View>
+
+        {/* Human Review Notice */}
+        {(imageUri || videoLink || sourceLink) && (
+          <View className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <View className="flex-row items-start">
+              <Text className="text-2xl mr-3">👤</Text>
+              <View className="flex-1">
+                <Text className="text-amber-900 font-psemibold text-sm mb-1">
+                  Human Fact-Checker Review
+                </Text>
+                <Text className="text-amber-700 font-pregular text-xs leading-5">
+                  Claims including images, video links, and other links will be thoroughly reviewed by our expert human fact-checkers to ensure accurate verification of visual evidence.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Submit Button */}
         <CustomButton

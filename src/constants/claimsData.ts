@@ -2,7 +2,7 @@
 // DEPRECATED: This file is no longer used.
 // ========================================
 // All claims data now comes from the backend API via src/services/claimsService.ts
-// The app now connects to: https://hakikisha-backend.onrender.com/api/v1
+// The app now connects to: https://hakikisha-backend-0r1w.onrender.com/api/v1
 // 
 // Mock data has been removed and replaced with real backend API calls.
 // See BACKEND_CONNECTION_STATUS.md for full details.

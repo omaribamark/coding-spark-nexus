@@ -1,9 +1,8 @@
 // API Configuration
-// Update this URL with your actual backend URL when deployed
 
 export const API_CONFIG = {
   // Production backend URL
-  BASE_URL: 'https://hakikisha-backend.onrender.com/api/v1',
+  BASE_URL: 'https://hakikisha-backend-0r1w.onrender.com',
   
   TIMEOUT: 30000, // 30 seconds
 };

@@ -7,9 +7,11 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import React, {useState, useRef, useEffect} from 'react';
 import * as ImagePicker from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 
@@ -29,22 +31,85 @@ type Props = {};
 
 const AITab = (props: Props) => {
   const { isDark } = useTheme();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hello! I\'m your AI Fact-Checking Assistant. I can help you verify claims, analyze statements, and fact-check information. How can I assist you today?',
-      timestamp: new Date(),
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachments, setAttachments] = useState<{type: 'image' | 'file', uri: string, name?: string}[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Load chat history on mount
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
+
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  // Save chat history whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory();
+    }
+  }, [messages]);
+
+  const loadChatHistory = async () => {
+    try {
+      const savedMessages = await AsyncStorage.getItem('ai_chat_history');
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        setMessages(parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })));
+      } else {
+        // Set initial welcome message if no history
+        setMessages([{
+          id: '1',
+          role: 'assistant',
+          content: 'Hello! I\'m your AI Fact-Checking Assistant. I can help you verify claims, analyze statements, and fact-check information. How can I assist you today?',
+          timestamp: new Date(),
+        }]);
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
+
+  const saveChatHistory = async () => {
+    try {
+      await AsyncStorage.setItem('ai_chat_history', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  };
+
+  const clearChatHistory = async () => {
+    Alert.alert(
+      'Clear Chat History',
+      'Are you sure you want to clear all chat history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('ai_chat_history');
+              setMessages([{
+                id: '1',
+                role: 'assistant',
+                content: 'Hello! I\'m your AI Fact-Checking Assistant. I can help you verify claims, analyze statements, and fact-check information. How can I assist you today?',
+                timestamp: new Date(),
+              }]);
+            } catch (error) {
+              console.error('Failed to clear chat history:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const handleSend = async () => {
     if (!inputText.trim() && attachments.length === 0) return;
@@ -73,7 +138,7 @@ const AITab = (props: Props) => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.data.response,
+        content: formatAIResponse(response.data.response),
         timestamp: new Date(),
       };
 
@@ -151,13 +216,73 @@ const AITab = (props: Props) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  // ✅ FIXED: Format AI response to remove numbered lists, double brackets, and numbering from links
+  const formatAIResponse = (text: string): string => {
+    // Remove double brackets from links like [[1]], [[2]], [[123]] or [[http://...]] - FIXED
+    let formatted = text.replace(/\[\[([^\]]+)\]\]/g, '$1');
+    // Remove numbered list patterns like "1.", "2.", "1)", "2)" - FIXED
+    formatted = formatted.replace(/^\d+[\.)]\s*/gm, '');
+    // Remove asterisks used for bold
+    formatted = formatted.replace(/\*\*/g, '');
+    // Remove numbering before links like "1. http://" or "1) http://"
+    formatted = formatted.replace(/^\d+[\.)]\s*(https?:\/\/)/gm, '$1');
+    return formatted;
+  };
+
+  // Render formatted text with clickable links and styled topics
+  const renderFormattedText = (text: string) => {
+    // Split text by URLs and format topics
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return (
+      <Text className={`text-[15px] leading-6 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+        {parts.map((part, index) => {
+          if (urlRegex.test(part)) {
+            // Render clickable link
+            return (
+              <Text
+                key={index}
+                className="text-blue-500 underline"
+                onPress={() => Linking.openURL(part).catch(() => Alert.alert('Error', 'Cannot open link'))}
+              >
+                {part}
+              </Text>
+            );
+          } else {
+            // Format topics (text before colons) in bold green
+            const topicRegex = /^([^:]+:)/gm;
+            const textParts = part.split(topicRegex);
+            
+            return textParts.map((textPart, tIndex) => {
+              if (textPart.endsWith(':')) {
+                // Topic text - bold only (not green)
+                return (
+                  <Text key={`${index}-${tIndex}`} className={`font-pbold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                    {textPart}
+                  </Text>
+                );
+              }
+              return <Text key={`${index}-${tIndex}`}>{textPart}</Text>;
+            });
+          }
+        })}
+      </Text>
+    );
+  };
+
   return (
     <View className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
-      {/* Header - Clean and Simple */}
+      {/* Header - Clean and Simple with Clear History */}
       <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} pt-12 pb-3 px-6`}>
-        <Text className={`text-base font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          AI Fact-Checker
-        </Text>
+        <View className="flex-row justify-between items-center">
+          <Text className={`text-base font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            AI Fact-Checker
+          </Text>
+          <TouchableOpacity onPress={clearChatHistory}>
+            <Text className="text-[#0A864D] font-pmedium text-sm">Clear History</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Messages */}
@@ -206,13 +331,15 @@ const AITab = (props: Props) => {
                 
                 {/* Message Text */}
                 {message.content && (
-                  <Text 
-                    className={`text-[15px] leading-6 ${
-                      message.role === 'user' ? 'text-white' : isDark ? 'text-gray-200' : 'text-gray-800'
-                    }`}
-                  >
-                    {message.content}
-                  </Text>
+                  <View>
+                    {message.role === 'user' ? (
+                      <Text className="text-[15px] leading-6 text-white">
+                        {message.content}
+                      </Text>
+                    ) : (
+                      renderFormattedText(message.content)
+                    )}
+                  </View>
                 )}
               </View>
             </View>

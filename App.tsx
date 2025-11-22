@@ -11,6 +11,8 @@ import {
   SignupScreen,
   AdminDashboardScreen,
   FactCheckerDashboardScreen,
+  VerifyEmailScreen,
+  TwoFactorAuthScreen,
 } from './src/screens';
 import PlaceOrder from './src/screens/SubmitClaimScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
@@ -42,6 +44,8 @@ export type RouteStackParamList = {
   BlogDetail: { blog: any } | undefined;
   ClaimDetails: { claimId: string };
   AboutApp: undefined;
+  VerifyEmail: { userId: string; email: string };
+  TwoFactorAuth: { userId: string; email: string; role: string };
 };
 
 const App = () => {
@@ -129,6 +133,14 @@ const App = () => {
             <Stack.Screen
               name="AboutApp"
               component={AboutAppScreen}
+            />
+            <Stack.Screen
+              name="VerifyEmail"
+              component={VerifyEmailScreen}
+            />
+            <Stack.Screen
+              name="TwoFactorAuth"
+              component={TwoFactorAuthScreen}
             />
           </Stack.Navigator>
         </NavigationContainer>

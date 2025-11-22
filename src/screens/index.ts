@@ -10,6 +10,8 @@ import HakikishaAIScreen from './HakikishaAIScreen';
 import TrendingClaimsScreen from './TrendingClaimsScreen';
 import BlogDetailScreen from './BlogDetailScreen';
 import AboutAppScreen from './AboutAppScreen';
+import VerifyEmailScreen from './VerifyEmailScreen';
+import TwoFactorAuthScreen from './TwoFactorAuthScreen';
 
 export {
   ForgotPasswordScreen,
@@ -24,4 +26,6 @@ export {
   TrendingClaimsScreen,
   BlogDetailScreen,
   AboutAppScreen,
+  VerifyEmailScreen,
+  TwoFactorAuthScreen,
 };

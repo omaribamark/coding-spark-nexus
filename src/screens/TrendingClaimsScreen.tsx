@@ -4,19 +4,40 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {mockClaims} from '../constants/claimsData';
+import {claimsService, Claim} from '../services/claimsService';
 
 type Props = {};
 
 const TrendingClaimsScreen = (props: Props) => {
   const navigation = useNavigation<StackNavigationProp<any>>();
-  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [trendingClaims, setTrendingClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const trendingClaims = mockClaims.filter(claim => claim.isTrending);
+  useEffect(() => {
+    fetchTrendingClaims();
+  }, []);
+
+  const fetchTrendingClaims = async () => {
+    try {
+      setLoading(true);
+      const data = await claimsService.getAllVerifiedClaims();
+      // Sort by latest first
+      const sorted = data.sort((a, b) => 
+        new Date(b.submittedDate || b.created_at || '').getTime() - 
+        new Date(a.submittedDate || a.created_at || '').getTime()
+      );
+      setTrendingClaims(sorted);
+    } catch (error: any) {
+      Alert.alert('Error', 'Failed to fetch trending claims');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,83 +69,25 @@ const TrendingClaimsScreen = (props: Props) => {
     }
   };
 
-  if (selectedClaim) {
+  if (loading) {
     return (
-      <View className="flex-1 bg-white">
-        {/* Header */}
-        <View style={{backgroundColor: '#0A864D'}} className="pt-12 pb-6 px-6">
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => setSelectedClaim(null)}>
-              <Text className="text-white text-3xl">←</Text>
-            </TouchableOpacity>
-            <Text className="text-white text-lg font-pbold">Claim Details</Text>
-            <View style={{width: 30}} />
-          </View>
-        </View>
-
-        <ScrollView className="flex-1 px-6 pt-6">
-          <View
-            className="px-4 py-2 rounded-full self-start mb-4"
-            style={{backgroundColor: getStatusColor(selectedClaim.status)}}>
-            <Text className="text-white text-sm font-psemibold">
-              {getStatusLabel(selectedClaim.status)}
-            </Text>
-          </View>
-
-          <Text className="text-2xl font-pbold text-gray-900 mb-4">
-            {selectedClaim.title}
-          </Text>
-
-          <Text className="text-gray-600 font-pregular text-base leading-6 mb-6">
-            {selectedClaim.description || 'No additional description available.'}
-          </Text>
-
-          {selectedClaim.verdict && (
-            <View className="bg-blue-50 rounded-2xl p-4 mb-6 border border-blue-200">
-              <Text className="font-pbold text-blue-900 mb-2">Verdict</Text>
-              <Text className="text-gray-700 font-pregular leading-6">
-                {selectedClaim.verdict}
-              </Text>
-            </View>
-          )}
-
-          <View className="bg-gray-50 rounded-2xl p-4 mb-6">
-            <View className="flex-row justify-between mb-3">
-              <Text className="text-gray-600 font-pmedium">Category</Text>
-              <Text className="font-psemibold text-gray-900">
-                {selectedClaim.category}
-              </Text>
-            </View>
-            <View className="flex-row justify-between mb-3">
-              <Text className="text-gray-600 font-pmedium">Submitted</Text>
-              <Text className="font-psemibold text-gray-900">
-                {selectedClaim.submittedDate}
-              </Text>
-            </View>
-            {selectedClaim.verdictDate && (
-              <View className="flex-row justify-between">
-                <Text className="text-gray-600 font-pmedium">Verified</Text>
-                <Text className="font-psemibold text-gray-900">
-                  {selectedClaim.verdictDate}
-                </Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+      <View className="flex-1 bg-white justify-center items-center">
+        <ActivityIndicator size="large" color="#0A864D" />
+        <Text className="text-gray-600 mt-4 font-pregular">Loading claims...</Text>
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
-      <View style={{backgroundColor: '#0A864D'}} className="pt-12 pb-6 px-6">
+      {/* Clean Header - Updated to match SubmitClaimScreen */}
+      <View className="bg-white pt-4 pb-4 px-6 border-b border-gray-200">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text className="text-white text-3xl">←</Text>
+            <Text className="text-gray-900 text-xl">←</Text>
           </TouchableOpacity>
-          <Text className="text-white text-xl font-pbold">Trending Claims</Text>
-          <View style={{width: 30}} />
+          <Text className="text-gray-900 text-lg font-pbold">Trending Claims</Text>
+          <View style={{width: 24}} />
         </View>
       </View>
 
@@ -133,7 +96,7 @@ const TrendingClaimsScreen = (props: Props) => {
           <TouchableOpacity
             key={claim.id}
             className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-gray-100"
-            onPress={() => setSelectedClaim(claim)}>
+            onPress={() => navigation.navigate('ClaimDetails', { claimId: claim.id })}>
             <View className="flex-row items-center justify-between mb-3">
               <View
                 style={{backgroundColor: '#0A864D'}}
@@ -152,16 +115,16 @@ const TrendingClaimsScreen = (props: Props) => {
             </View>
 
             <Text className="text-gray-900 font-pbold text-base mb-2 leading-5">
-              {claim.title}
+              {claim.title || claim.description}
             </Text>
 
             <Text className="text-gray-600 font-pregular text-sm mb-3" numberOfLines={2}>
-              {claim.description || 'Tap to view more details'}
+              {claim.description || claim.title || 'Tap to view more details'}
             </Text>
 
             <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
               <Text className="text-gray-500 text-xs font-pregular">
-                {claim.submittedDate}
+                {new Date(claim.submittedDate || claim.created_at || '').toLocaleDateString()}
               </Text>
               <Text className="text-[#0A864D] text-xs font-pmedium">
                 View Details →

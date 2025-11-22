@@ -6,6 +6,7 @@ import {blogService} from '../services/blogService';
 import {shareService} from '../services/shareService';
 import {icons} from '../constants';
 import { useTheme } from '../context/ThemeContext';
+import { formatDateTime } from '../utils/dateFormatter';
 
 type Props = {};
 
@@ -70,20 +71,6 @@ const BlogsTab = (props: Props) => {
   // Get remaining blogs for the list (excluding the featured one)
   const remainingBlogs = blogs.length > 1 ? blogs.slice(1) : [];
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return 'Date Error';
-    }
-  };
 
   const getAuthorName = (blog: any) => {
     return blog.author_name || 
@@ -212,26 +199,47 @@ const BlogsTab = (props: Props) => {
                 shadowRadius: 8,
                 elevation: 4,
               }}
-              className="rounded-2xl p-5"
+              className="rounded-2xl overflow-hidden"
               onPress={() => navigateToBlogDetail(featuredBlog)}>
-              <View className="flex-row items-center justify-between mb-3">
-                <View className="bg-white/20 px-3 py-1 rounded-full">
-                  <Text className="text-white text-xs font-pbold">✨ Featured</Text>
+              
+              {/* Featured Image or Video */}
+              {(featuredBlog.featured_image || featuredBlog.video_url) && (
+                <View className="w-full h-48 bg-gray-800">
+                  {featuredBlog.featured_image ? (
+                    <Image 
+                      source={{ uri: featuredBlog.featured_image }} 
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : featuredBlog.video_url && (
+                    <View className="w-full h-full items-center justify-center bg-black/50">
+                      <Text className="text-white text-4xl mb-2">▶️</Text>
+                      <Text className="text-white text-xs font-pmedium">Video Content</Text>
+                    </View>
+                  )}
                 </View>
-                <Text className="text-white/80 text-xs font-pmedium">
-                  {formatDate(featuredBlog.published_at || featuredBlog.created_at)}
+              )}
+              
+              <View className="p-5">
+                <View className="flex-row items-center justify-between mb-3">
+                  <View className="bg-white/20 px-3 py-1 rounded-full">
+                    <Text className="text-white text-xs font-pbold">✨ Featured</Text>
+                  </View>
+                  <Text className="text-white/80 text-xs font-pmedium">
+                    {formatDateTime(featuredBlog.published_at || featuredBlog.created_at)}
+                  </Text>
+                </View>
+                <Text className="text-white text-xl font-pbold mb-2 leading-6">
+                  {featuredBlog.title}
                 </Text>
-              </View>
-              <Text className="text-white text-xl font-pbold mb-2 leading-6">
-                {featuredBlog.title}
-              </Text>
-              <Text className="text-white/90 font-pregular text-sm mb-4 leading-5">
-                {getExcerpt(featuredBlog)}
-              </Text>
-              <View className="bg-white px-4 py-2.5 rounded-xl self-start shadow-sm">
-                <Text style={{color: '#0A864D'}} className="font-psemibold text-sm">
-                  Read Now →
+                <Text className="text-white/90 font-pregular text-sm mb-4 leading-5">
+                  {getExcerpt(featuredBlog)}
                 </Text>
+                <View className="bg-white px-4 py-2.5 rounded-xl self-start shadow-sm">
+                  <Text style={{color: '#0A864D'}} className="font-psemibold text-sm">
+                    Read Now →
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           </View>
@@ -252,7 +260,7 @@ const BlogsTab = (props: Props) => {
             {remainingBlogs.map((item, index) => (
               <TouchableOpacity 
                 key={item.id || index} 
-                className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 mb-3 shadow-sm border`}
+                className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl overflow-hidden mb-3 shadow-sm border`}
                 style={{
                   shadowColor: '#000',
                   shadowOffset: {width: 0, height: 1},
@@ -262,47 +270,67 @@ const BlogsTab = (props: Props) => {
                 }}
                 onPress={() => navigateToBlogDetail(item)}
               >
-                {/* Category & Date */}
-                <View className="flex-row items-center justify-between mb-3">
-                  <View className="flex-row items-center">
-                    <View 
-                      style={{backgroundColor: '#0A864D'}}
-                      className="px-3 py-1 rounded-full"
-                    >
-                      <Text className="text-white text-xs font-psemibold">
-                        {getCategory(item)}
+                {/* Featured Image or Video Thumbnail */}
+                {(item.featured_image || item.video_url) && (
+                  <View className="w-full h-40 bg-gray-200">
+                    {item.featured_image ? (
+                      <Image 
+                        source={{ uri: item.featured_image }} 
+                        className="w-full h-full"
+                        resizeMode="cover"
+                      />
+                    ) : item.video_url && (
+                      <View className="w-full h-full items-center justify-center bg-gray-300">
+                        <Text className="text-gray-600 text-3xl mb-1">▶️</Text>
+                        <Text className="text-gray-600 text-xs font-pmedium">Video</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                <View className="p-4">
+                  {/* Category & Date */}
+                  <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center">
+                      <View 
+                        style={{backgroundColor: '#0A864D'}}
+                        className="px-3 py-1 rounded-full"
+                      >
+                        <Text className="text-white text-xs font-psemibold">
+                          {getCategory(item)}
+                        </Text>
+                      </View>
+                      <Text className="text-gray-400 text-xs font-pregular ml-2">
+                        • {formatDateTime(item.published_at || item.created_at)}
                       </Text>
                     </View>
-                    <Text className="text-gray-400 text-xs font-pregular ml-2">
-                      • {formatDate(item.published_at || item.created_at)}
-                    </Text>
                   </View>
-                </View>
 
-                {/* Title */}
-                <Text className={`${isDark ? 'text-white' : 'text-gray-900'} font-pbold text-base mb-2 leading-5`}>
-                  {item.title}
-                </Text>
+                  {/* Title */}
+                  <Text className={`${isDark ? 'text-white' : 'text-gray-900'} font-pbold text-base mb-2 leading-5`}>
+                    {item.title}
+                  </Text>
 
-                {/* Excerpt */}
-                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-pregular text-sm mb-4 leading-5`}>
-                  {getExcerpt(item)}
-                </Text>
+                  {/* Excerpt */}
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-pregular text-sm mb-4 leading-5`}>
+                    {getExcerpt(item)}
+                  </Text>
 
-                {/* Author & Share */}
-                <View className={`flex-row items-center justify-between pt-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <View className="flex-row items-center flex-1">
-                    <View className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mr-2`} />
-                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-xs font-pmedium flex-1`}>
-                      {getAuthorName(item)}
-                    </Text>
+                  {/* Author & Share */}
+                  <View className={`flex-row items-center justify-between pt-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <View className="flex-row items-center flex-1">
+                      <View className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mr-2`} />
+                      <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-xs font-pmedium flex-1`}>
+                        {getAuthorName(item)}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleShareBlog(item)}
+                      className="ml-2 p-2"
+                    >
+                      <Text className="text-[#0A864D] text-lg">🔗</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => handleShareBlog(item)}
-                    className="ml-2 p-2"
-                  >
-                    <Text className="text-[#0A864D] text-lg">🔗</Text>
-                  </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             ))}

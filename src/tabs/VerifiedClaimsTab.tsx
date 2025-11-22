@@ -49,8 +49,11 @@ const VerifiedClaimsTab = (props: Props) => {
     fetchVerifiedClaims();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  // ✅ FIXED: Use verdict field for accurate status display
+  const getStatusColor = (claim: Claim) => {
+    const finalStatus = claim.verdict || claim.status;
+    switch (finalStatus) {
+      case 'true':
       case 'verified':
         return 'bg-green-100';
       case 'false':
@@ -58,14 +61,17 @@ const VerifiedClaimsTab = (props: Props) => {
       case 'misleading':
         return 'bg-orange-100';
       case 'needs_context':
+      case 'unverifiable':
         return 'bg-yellow-100';
       default:
         return 'bg-gray-100';
     }
   };
 
-  const getStatusTextColor = (status: string) => {
-    switch (status) {
+  const getStatusTextColor = (claim: Claim) => {
+    const finalStatus = claim.verdict || claim.status;
+    switch (finalStatus) {
+      case 'true':
       case 'verified':
         return 'text-green-700';
       case 'false':
@@ -73,14 +79,17 @@ const VerifiedClaimsTab = (props: Props) => {
       case 'misleading':
         return 'text-orange-700';
       case 'needs_context':
+      case 'unverifiable':
         return 'text-yellow-700';
       default:
         return 'text-gray-700';
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
+  const getStatusLabel = (claim: Claim) => {
+    const finalStatus = claim.verdict || claim.status;
+    switch (finalStatus) {
+      case 'true':
       case 'verified':
         return '✓ True';
       case 'false':
@@ -88,9 +97,10 @@ const VerifiedClaimsTab = (props: Props) => {
       case 'misleading':
         return '⚠ Misleading';
       case 'needs_context':
+      case 'unverifiable':
         return '📋 Needs Context';
       default:
-        return 'Unknown';
+        return '⏳ Pending';
     }
   };
 
@@ -185,10 +195,10 @@ const VerifiedClaimsTab = (props: Props) => {
                   </Text>
                 )}
 
-                {/* Status Badge */}
-                <View className={`px-3 py-1.5 rounded-full self-start mb-3 ${getStatusColor(claim.status)}`}>
-                  <Text className={`text-xs font-psemibold ${getStatusTextColor(claim.status)}`}>
-                    {getStatusLabel(claim.status)}
+                {/* Status Badge - ✅ FIXED: Use verdict field */}
+                <View className={`px-3 py-1.5 rounded-full self-start mb-3 ${getStatusColor(claim)}`}>
+                  <Text className={`text-xs font-psemibold ${getStatusTextColor(claim)}`}>
+                    {getStatusLabel(claim)}
                   </Text>
                 </View>
 

@@ -3,7 +3,6 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  FlatList,
   ScrollView,
   StatusBar,
   Alert,
@@ -35,6 +34,7 @@ const HomeTab: React.FC<Props> = (props: Props) => {
   const navigation = useNavigation<StackNavigationProp<RouteStackParamList>>();
   const { isDark } = useTheme();
   const [trendingClaims, setTrendingClaims] = useState<Claim[]>([]);
+  const [recentClaims, setRecentClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -43,18 +43,38 @@ const HomeTab: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     fetchTrendingClaims();
     fetchUserProfile();
+    fetchRecentClaims();
   }, []);
 
   const fetchTrendingClaims = async (): Promise<void> => {
-    setLoading(true);
     try {
-      const data = await claimsService.getTrendingClaims(10);
-      setTrendingClaims(data);
+      setLoading(true);
+      const trendingData = await claimsService.getTrendingClaims(20);
+      
+      const sortedClaims = trendingData.sort((a: Claim, b: Claim) => 
+        new Date(b.submittedDate || b.created_at || '').getTime() - 
+        new Date(a.submittedDate || a.created_at || '').getTime()
+      ).slice(0, 10);
+      
+      setTrendingClaims(sortedClaims);
     } catch (error: any) {
       console.error('Fetch trending claims error:', error);
-      // Don't show alert for trending claims as they're not critical
+      Alert.alert('Error', 'Failed to fetch community claims');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentClaims = async (): Promise<void> => {
+    try {
+      const data = await claimsService.getUserClaims();
+      const sortedClaims = data.sort((a: Claim, b: Claim) => 
+        new Date(b.submittedDate || b.created_at || '').getTime() - 
+        new Date(a.submittedDate || a.created_at || '').getTime()
+      ).slice(0, 5);
+      setRecentClaims(sortedClaims);
+    } catch (error: any) {
+      console.error('Fetch recent claims error:', error);
     }
   };
 
@@ -65,7 +85,6 @@ const HomeTab: React.FC<Props> = (props: Props) => {
       setProfile(data);
     } catch (error: any) {
       console.error('Failed to fetch profile:', error);
-      // Don't show alert for profile as it's not critical for home screen
     } finally {
       setProfileLoading(false);
     }
@@ -73,76 +92,138 @@ const HomeTab: React.FC<Props> = (props: Props) => {
 
   const onRefresh = async (): Promise<void> => {
     setRefreshing(true);
-    await Promise.all([fetchTrendingClaims(), fetchUserProfile()]);
+    await Promise.all([fetchTrendingClaims(), fetchUserProfile(), fetchRecentClaims()]);
     setRefreshing(false);
   };
 
-  const getStatusColor = (status: string, verdict?: string): string => {
+  // ✅ CORRECTED: Proper AI vs Human verdict detection
+  const getVerdictType = (claim: any): { isAI: boolean; isHuman: boolean } => {
+    const hasAIVerdict = claim.ai_verdict && (claim.ai_verdict.explanation || claim.ai_verdict.verdict);
+    const hasHumanReview = claim.fact_checker || claim.human_explanation || claim.verdictDate;
+    
+    // If there's explicit human review, it's human verdict
+    if (hasHumanReview) {
+      return { isAI: false, isHuman: true };
+    }
+    
+    // If there's AI verdict but no human review, it's AI verdict
+    if (hasAIVerdict) {
+      return { isAI: true, isHuman: false };
+    }
+    
+    // Default to AI Verdict (changed from pending)
+    return { isAI: true, isHuman: false };
+  };
+
+  // ✅ CORRECTED: Status detection
+  const getFinalStatus = (claim: any) => {
+    const { isAI, isHuman } = getVerdictType(claim);
+    
+    if (isHuman) {
+      return {
+        status: claim.verdict || 'verified',
+        verdict: claim.verdict,
+        isAI: false,
+        isHuman: true
+      };
+    }
+    
+    if (isAI) {
+      return {
+        status: 'ai_verified',
+        verdict: claim.verdict || claim.ai_verdict?.verdict,
+        isAI: true,
+        isHuman: false
+      };
+    }
+    
+    return {
+      status: claim.status || 'ai_verified',
+      verdict: claim.verdict,
+      isAI: true,
+      isHuman: false
+    };
+  };
+
+  // ✅ UPDATED: Use improved status detection
+  const getStatusColor = (claim: any) => {
+    const { status, verdict } = getFinalStatus(claim);
     const finalStatus = verdict || status;
     
     switch (finalStatus) {
       case 'true':
+      case 'verified':
       case 'resolved':
-        return 'bg-green-100';
+      case 'completed':
+      case 'ai_verified':
+        return '#0A864D'; // Green
       case 'false':
-        return 'bg-red-100';
+        return '#dc2626'; // Red
       case 'misleading':
-        return 'bg-orange-100';
+        return '#EF9334'; // Orange
+      case 'needs_context':
       case 'unverifiable':
-        return 'bg-yellow-100';
+        return '#3b82f6'; // Blue
       default:
-        return 'bg-gray-100';
+        return '#6b7280'; // Gray
     }
   };
 
-  const getStatusTextColor = (status: string, verdict?: string): string => {
+  // ✅ CORRECTED: Status labels with proper AI/Human distinction
+  const getStatusLabel = (claim: any) => {
+    const { status, verdict, isAI } = getFinalStatus(claim);
     const finalStatus = verdict || status;
     
     switch (finalStatus) {
       case 'true':
+      case 'verified':
       case 'resolved':
-        return 'text-green-700';
+      case 'completed':
+      case 'ai_verified':
+        return isAI ? 'AI: True' : 'True';
       case 'false':
-        return 'text-red-700';
+        return isAI ? 'AI: False' : 'False';
       case 'misleading':
-        return 'text-orange-700';
+        return isAI ? 'AI: Misleading' : 'Misleading';
+      case 'needs_context':
       case 'unverifiable':
-        return 'text-yellow-700';
+        return isAI ? 'AI: Needs Context' : 'Needs Context';
       default:
-        return 'text-gray-700';
+        return 'AI Verdict'; // Changed from 'Pending Review'
     }
   };
 
-  const getStatusLabel = (status: string, verdict?: string): string => {
-    // Use verdict if available, otherwise use status
-    const finalStatus = verdict || status;
+  // ✅ UPDATED: Verdict type label - All verdicts are now AI Verdict
+  const getVerdictTypeLabel = (claim: any) => {
+    const { isAI, isHuman } = getVerdictType(claim);
     
-    switch (finalStatus) {
-      case 'true':
-      case 'resolved':
-        return '✓ True';
-      case 'false':
-        return '✗ False';
-      case 'misleading':
-        return '⚠ Misleading';
-      case 'unverifiable':
-        return '📋 Unverifiable';
-      default:
-        return '⏳ Pending';
+    if (isHuman) {
+      return 'Human Verdict';
     }
+    
+    // All other cases return AI Verdict
+    return 'AI Verdict';
   };
 
   const formatDate = (dateString?: string): string => {
-    if (!dateString) return '';
+    if (!dateString) return 'Date unavailable';
+    
     try {
       const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
       });
     } catch (error) {
-      return dateString;
+      console.error('Error formatting date:', error);
+      return 'Date error';
     }
   };
 
@@ -157,11 +238,11 @@ const HomeTab: React.FC<Props> = (props: Props) => {
       {/* Professional Header - Logo in absolute left corner */}
       <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} pt-2 pb-2 px-0 shadow-sm`}>
         <View className="flex-row items-center justify-between">
-          {/* Logo on Absolute Left Corner */}
-          <View className="pl-4">
+          {/* Logo on Absolute Left Corner - INCREASED SIZE AND MOVED LEFT */}
+          <View >
             <Image
-              source={require('../assets/images/creco-kenya.png')}
-              className="w-40 h-10"
+              source={require('../assets/images/logowithnobackground.png')}
+              className="w-28 h-12" // Increased from w-40 h-10 to w-48 h-12
               resizeMode="contain"
             />
           </View>
@@ -237,10 +318,11 @@ const HomeTab: React.FC<Props> = (props: Props) => {
           </View>
         </View>
 
-        {/* Trending Claims - Redesigned Like Blog Posts */}
+
+        {/* Latest Community Claims - Redesigned Like Blog Posts */}
         <View className="mt-6 px-6 pb-8">
           <View className="flex flex-row justify-between items-center mb-4">
-            <Text className={`text-lg font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Trending Claims</Text>
+            <Text className={`text-lg font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Latest Community Claims</Text>
             <TouchableOpacity onPress={fetchTrendingClaims}>
               <Text className="text-[#0A864D] font-pmedium text-sm">Refresh</Text>
             </TouchableOpacity>
@@ -259,22 +341,25 @@ const HomeTab: React.FC<Props> = (props: Props) => {
               }}
               onPress={() => handleClaimPress(claim.id)}
             >
-              {/* Category & Status - Like Blog Category & Read Time */}
+              {/* Category and Status Badges */}
               <View className="flex-row items-center justify-between mb-3">
-                <View className="flex-row items-center">
-                  <View 
-                    style={{backgroundColor: '#0A864D'}}
-                    className="px-3 py-1 rounded-full"
-                  >
-                    <Text className="text-white text-xs font-psemibold">
-                      {claim.category || 'General'}
-                    </Text>
-                  </View>
-                  <Text className="text-gray-400 text-xs font-pregular ml-2">
-                    • {claim.category || 'General'}
+                <View 
+                  style={{backgroundColor: '#EF9334'}}
+                  className="px-3 py-1 rounded-full"
+                >
+                  <Text className="text-white text-xs font-psemibold">
+                    {claim.category || 'General'}
                   </Text>
                 </View>
-                <View className="w-2 h-2 bg-gray-300 rounded-full" />
+                {/* ✅ UPDATED: Status Badge with AI Verdict labels */}
+                <View
+                  className="px-3 py-1 rounded-full"
+                  style={{backgroundColor: getStatusColor(claim)}}
+                >
+                  <Text className="text-white text-xs font-psemibold">
+                    {getStatusLabel(claim)}
+                  </Text>
+                </View>
               </View>
 
               {/* Single Claim Body - Show only description if available, otherwise title */}
@@ -282,27 +367,26 @@ const HomeTab: React.FC<Props> = (props: Props) => {
                 {claim.description || claim.title}
               </Text>
 
-              {/* Status Badge */}
-              <View className={`px-3 py-1.5 rounded-full self-start mb-3 ${getStatusColor(claim.status, claim.verdict)}`}>
-                <Text className={`text-xs font-psemibold ${getStatusTextColor(claim.status, claim.verdict)}`}>
-                  {getStatusLabel(claim.status, claim.verdict)}
-                </Text>
-              </View>
-
-              {/* Additional Info - Like Blog Author & Date */}
+              {/* Additional Info - Shows verdict type and submission date */}
               <View className={`flex-row items-center justify-between pt-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
                 <View className="flex-row items-center">
-                  <View className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mr-2`} />
                   <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-xs font-pmedium`}>
-                    {claim.verdictDate 
-                      ? `Verified: ${formatDate(claim.verdictDate)}` 
-                      : 'Under Review'}
+                    {getVerdictTypeLabel(claim)}
                   </Text>
                 </View>
                 <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-xs font-pregular`}>
-                  {formatDate(claim.submittedDate || claim.created_at)}
+                  Submitted: {formatDate(claim.submittedDate || claim.created_at)}
                 </Text>
               </View>
+
+              {/* Creco Fact Checker Badge - Show if edited by Creco */}
+              {(claim.fact_checker !== undefined && claim.fact_checker !== null) && (
+                <View className="mt-2 px-3 py-1 bg-blue-100 rounded-full self-start">
+                  <Text className="text-blue-700 text-xs font-psemibold">
+                    👨Reviewed by Creco Fact Checker
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
           
@@ -313,8 +397,8 @@ const HomeTab: React.FC<Props> = (props: Props) => {
                 <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-xl`}>🔥</Text>
               </View>
               <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs text-center`}>
-                No trending claims{"\n"}
-                <Text className={isDark ? 'text-gray-600' : 'text-gray-400'}>Check back later for updates</Text>
+                No community claims found{"\n"}
+                <Text className={isDark ? 'text-gray-600' : 'text-gray-400'}>Be the first to submit a claim</Text>
               </Text>
             </View>
           )}

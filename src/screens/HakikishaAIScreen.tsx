@@ -28,19 +28,58 @@ const HakikishaAIScreen = (props: Props) => {
       [
         {
           text: 'Take Photo',
-          onPress: () => {
-            Alert.alert('Info', 'Camera feature will be implemented with backend');
-          },
+          onPress: launchCamera,
         },
         {
           text: 'Choose from Gallery',
-          onPress: () => {
-            Alert.alert('Info', 'Image picker will be implemented with backend');
-          },
+          onPress: launchImageLibrary,
         },
         {text: 'Cancel', style: 'cancel'},
       ],
     );
+  };
+
+  const launchImageLibrary = () => {
+    const ImagePicker = require('react-native-image-picker');
+    const options: any = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      quality: 0.8,
+    };
+
+    ImagePicker.launchImageLibrary(options, (response: any) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        Alert.alert('Error', 'Failed to select image. Please try again.');
+      } else if (response.assets && response.assets[0]) {
+        setSelectedImage(response.assets[0].uri || null);
+      }
+    });
+  };
+
+  const launchCamera = () => {
+    const ImagePicker = require('react-native-image-picker');
+    const options: any = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      quality: 0.8,
+      saveToPhotos: true,
+    };
+
+    ImagePicker.launchCamera(options, (response: any) => {
+      if (response.didCancel) {
+        console.log('User cancelled camera');
+      } else if (response.errorCode) {
+        Alert.alert('Error', 'Failed to take photo. Please try again.');
+      } else if (response.assets && response.assets[0]) {
+        setSelectedImage(response.assets[0].uri || null);
+      }
+    });
   };
 
   const handleAnalyzeImage = async () => {

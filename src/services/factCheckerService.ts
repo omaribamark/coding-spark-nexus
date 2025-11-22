@@ -14,6 +14,13 @@ interface PendingClaim {
     url: string;
     title: string;
   }>;
+  ai_suggestion?: {
+    status: 'verified' | 'false' | 'misleading' | 'needs_context';
+    verdict: string;
+    confidence: number;
+    sources: string[];
+    analyzed_at: string;
+  };
 }
 
 interface VerdictData {
@@ -33,6 +40,7 @@ interface FactCheckerStats {
   verified_false: number;
   misleading: number;
   needs_context: number;
+  accuracy: string;
 }
 
 interface Blog {

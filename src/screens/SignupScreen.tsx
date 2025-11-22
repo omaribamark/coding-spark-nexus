@@ -37,6 +37,9 @@ const SignupScreen = () => {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  // Email validation regex
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const onSelectCountry = (selectedCountry: Country) => {
     setCountry(selectedCountry);
     setCountryCode(selectedCountry.cca2);
@@ -49,13 +52,46 @@ const SignupScreen = () => {
   };
 
   const handleSignup = async () => {
-    if (!email || !username || !password || !phoneNumber || !country) {
-      Alert.alert('Error', 'Please fill all required fields');
+    // Trim all inputs to handle spaces
+    const trimmedEmail = email.trim();
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+    
+    if (!trimmedEmail || !trimmedUsername || !trimmedPassword || !trimmedPhoneNumber || !country) {
+      Alert.alert('Registration Error', 'Please fill all required fields to continue.');
+      return;
+    }
+
+    // Validate email format
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address (e.g., example@domain.com).');
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate phone number: must be 9 digits starting with 7 or 1
+    if (trimmedPhoneNumber.length !== 9) {
+      Alert.alert('Invalid Phone Number', 'Phone number must be exactly 9 digits.');
       return;
     }
     
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    const firstDigit = trimmedPhoneNumber.charAt(0);
+    if (firstDigit !== '7' && firstDigit !== '1') {
+      Alert.alert('Invalid Phone Number', 'Phone number must start with 7 or 1.');
+      return;
+    }
+
+    // Validate password length
+    if (trimmedPassword.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+      setPasswordError('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      Alert.alert('Password Mismatch', 'The passwords you entered do not match. Please try again.');
       return;
     }
 
@@ -63,22 +99,40 @@ const SignupScreen = () => {
     
     try {
       const { authService } = require('../services/authService');
-      await authService.register({
-        email: email,
-        password: password,
-        full_name: username,
-        phone_number: `+${callingCode}${phoneNumber}`,
-        country: country ? (typeof country.name === 'string' ? country.name : country.name.common || '') : '',
+      const data = await authService.register({
+        email: trimmedEmail,
+        password: trimmedPassword,
+        full_name: trimmedUsername,
+        phone_number: `+${callingCode}${trimmedPhoneNumber}`,
       });
       
       setIsSubmitting(false);
-      Alert.alert('Success', 'Account created successfully! Please login.');
+      
+      // Check if email verification is required
+      if (data.requiresEmailVerification) {
+        Alert.alert(
+          'Registration Successful',
+          'Please check your email for a verification code to complete registration.',
+          [
+            {
+              text: 'OK',
+              onPress: () => (navigation as any).navigate('VerifyEmail', {
+                userId: data.userId,
+                email: data.email,
+              })
+            }
+          ]
+        );
+        return;
+      }
+      
+      Alert.alert('Account Created Successfully', 'Your account has been created. Please login to continue.');
       navigation.navigate('Login');
       
     } catch (error: any) {
       setIsSubmitting(false);
-      const message = error.response?.data?.error || 'Signup failed. Please try again.';
-      Alert.alert('Error', message);
+      const message = error.response?.data?.error || error.message || 'Registration failed. Please check your information and try again.';
+      Alert.alert('Registration Failed', message);
     }
   };
   
@@ -118,14 +172,19 @@ const SignupScreen = () => {
               value={email}
               placeholder="Enter your email"
               onChangeText={(text: string) => {
-                setEmailError('');
                 setEmail(text);
+                if (text && !EMAIL_REGEX.test(text.trim())) {
+                  setEmailError('Please enter a valid email address');
+                } else {
+                  setEmailError('');
+                }
               }}
               error={emailError}
               fieldName="email"
               focusedField={focusedField}
               onFocus={() => setFocusedField('email')}
               onBlur={() => setFocusedField(null)}
+              keyboardType="email-address"
             />
 
             <LineInputField

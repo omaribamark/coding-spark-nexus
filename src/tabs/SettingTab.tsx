@@ -8,6 +8,7 @@ import {
   Alert,
   RefreshControl,
   Switch,
+  Linking,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import {icons} from '../constants';
@@ -176,6 +177,43 @@ const SettingTab = (props: Props) => {
               <Text className={`${isDark ? 'text-white' : 'text-gray-800'} font-psemibold text-base`}>Privacy Policy</Text>
               <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs mt-1`}>
                 Read our privacy policy
+              </Text>
+            </View>
+          </View>
+          <Image 
+            source={icons.arrow_right} 
+            className="w-5 h-5" 
+            resizeMode="contain"
+            style={{ tintColor: isDark ? '#9CA3AF' : undefined }}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 mb-3 shadow-sm flex-row items-center justify-between border`}
+          onPress={() => {
+            const email = 'kellynyachiro@gmail.com';
+            const subject = 'Feedback from HAKIKISHA User';
+            const body = 'Hello,\n\nI would like to provide feedback about...\n\n';
+            const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            Linking.canOpenURL(mailto)
+              .then((supported) => {
+                if (supported) {
+                  return Linking.openURL(mailto);
+                } else {
+                  Alert.alert('Email Not Available', 'Please send your feedback to kellynyachiro@gmail.com');
+                }
+              })
+              .catch(() => Alert.alert('Error', 'Unable to open email client'));
+          }}>
+          <View className="flex-row items-center">
+            <View className={`w-12 h-12 rounded-full ${isDark ? 'bg-gray-700' : 'bg-purple-50'} items-center justify-center mr-4`}>
+              <Text className="text-xl">💬</Text>
+            </View>
+            <View>
+              <Text className={`${isDark ? 'text-white' : 'text-gray-800'} font-psemibold text-base`}>Feedback</Text>
+              <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs mt-1`}>
+                Contact fact-checkers
               </Text>
             </View>
           </View>

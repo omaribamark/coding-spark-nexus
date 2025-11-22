@@ -37,11 +37,10 @@ const ProfileScreen = (props: Props) => {
     name: '',
     email: '',
     phone: '',
-    bio: '',
+    country: '',
     points: 0,
-    current_streak: 0,
-    longest_streak: 0,
     profile_picture: '',
+    role: '',
   });
   const [passwords, setPasswords] = useState({
     current: '',
@@ -61,15 +60,15 @@ const ProfileScreen = (props: Props) => {
       const data = await userService.getProfile();
       console.log('Profile data received:', data);
       
+      // ✅ FIXED: Properly display phone number from registration
       setProfile({
         name: data.full_name || data.username || '',
         email: data.email || '',
-        phone: data.phone_number || data.phone || '',
-        bio: '',
+        phone: data.phone_number || data.phone || '', // This now properly shows phone from registration
+        country: '',
         points: data.points || 0,
-        current_streak: data.current_streak || 0,
-        longest_streak: data.longest_streak || 0,
         profile_picture: data.profile_picture || '',
+        role: data.role || 'user',
       });
       
       console.log('Points display:', {
@@ -258,8 +257,6 @@ const ProfileScreen = (props: Props) => {
         name: updatedData.full_name || updatedData.username || '',
         phone: updatedData.phone_number || updatedData.phone || '',
         points: updatedData.points || 0,
-        current_streak: updatedData.current_streak || 0,
-        longest_streak: updatedData.longest_streak || 0,
         profile_picture: updatedData.profile_picture || profile.profile_picture,
       });
       
@@ -333,20 +330,6 @@ const ProfileScreen = (props: Props) => {
     );
   };
 
-  const getStreakMessage = () => {
-    if (profile.current_streak === 0) {
-      return 'Start your streak today!';
-    } else if (profile.current_streak === 1) {
-      return 'Great start! Keep going tomorrow.';
-    } else if (profile.current_streak < 7) {
-      return `${profile.current_streak} day streak!`;
-    } else if (profile.current_streak < 30) {
-      return `Amazing! ${profile.current_streak} days in a row!`;
-    } else {
-      return `Incredible! ${profile.current_streak} day streak!`;
-    }
-  };
-
   const getPointsMessage = () => {
     if (profile.points === 0) {
       return 'Start earning points by using the app!';
@@ -379,7 +362,7 @@ const ProfileScreen = (props: Props) => {
     return (
       <View className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'} items-center justify-center`}>
         <ActivityIndicator size="large" color="#0A864D" />
-        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-4 font-pregular`}>Loading profile...</Text>
+        <Text className={`${isDark ? 'text-white' : 'text-gray-600'} mt-4 font-pregular`}>Loading profile...</Text>
       </View>
     );
   }
@@ -405,7 +388,7 @@ const ProfileScreen = (props: Props) => {
             {uploadingImage ? (
               <View className={`w-24 h-24 rounded-full items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <ActivityIndicator size="small" color="#0A864D" />
-                <Text className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-2`}>Uploading...</Text>
+                <Text className={`text-xs ${isDark ? 'text-white' : 'text-gray-500'} mt-2`}>Uploading...</Text>
               </View>
             ) : (
               <>
@@ -431,7 +414,7 @@ const ProfileScreen = (props: Props) => {
             </TouchableOpacity>
           )}
           
-          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-xs mt-2 font-pregular`}>
+          <Text className={`${isDark ? 'text-white' : 'text-gray-500'} text-xs mt-2 font-pregular`}>
             Tap the camera icon to change your photo
           </Text>
         </View>
@@ -447,7 +430,7 @@ const ProfileScreen = (props: Props) => {
                 <Text className={`${isDark ? 'text-white' : 'text-gray-800'} font-psemibold text-base`}>
                   {isDark ? 'Dark Mode' : 'Light Mode'}
                 </Text>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs mt-1`}>
+                <Text className={`${isDark ? 'text-white' : 'text-gray-500'} font-pregular text-xs mt-1`}>
                   Switch to {isDark ? 'light' : 'dark'} theme
                 </Text>
               </View>
@@ -460,32 +443,28 @@ const ProfileScreen = (props: Props) => {
             />
           </View>
 
-          {/* Points Display - FIXED SECTION */}
-          <View className={`${isDark ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200'} rounded-xl p-4 mb-4 border`}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-600'} font-pmedium text-xs mb-1`}>Your Points</Text>
-                <Text className="text-3xl font-pbold" style={{color: '#EF9334'}}>
-                  {profile.points}
-                </Text>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-600'} font-pregular text-xs mt-1`}>
-                  {getPointsMessage()}
-                </Text>
+          {/* Points Display - UPDATED WITHOUT STREAKS (Hidden for Admins and Fact Checkers) */}
+          {profile.role !== 'admin' && profile.role !== 'fact_checker' && (
+            <View className={`${isDark ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200'} rounded-xl p-4 mb-4 border`}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className={`${isDark ? 'text-white' : 'text-gray-600'} font-pmedium text-xs mb-1`}>Your Points</Text>
+                  <Text className="text-3xl font-pbold" style={{color: '#EF9334'}}>
+                    {profile.points}
+                  </Text>
+                  <Text className={`${isDark ? 'text-white' : 'text-gray-600'} font-pregular text-xs mt-1`}>
+                    {getPointsMessage()}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-4xl">🏆</Text>
+                </View>
               </View>
-              <View className="items-end">
-                <Text className="text-4xl">🏆</Text>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs mt-1`}>
-                  Streak: {profile.current_streak} days
-                </Text>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs`}>
-                  Best: {profile.longest_streak} days
-                </Text>
-              </View>
+              <Text className={`${isDark ? 'text-white' : 'text-gray-600'} font-pregular text-xs mt-2`}>
+                Keep engaging with the app to earn more points!
+              </Text>
             </View>
-            <Text className={`${isDark ? 'text-gray-400' : 'text-gray-600'} font-pregular text-xs mt-2`}>
-              {getStreakMessage()} Engage daily to earn more points and maintain your streak!
-            </Text>
-          </View>
+          )}
 
           {/* Profile Information - Collapsible */}
           <View className="mb-3">
@@ -518,7 +497,7 @@ const ProfileScreen = (props: Props) => {
                 <Image 
                   source={icons.arrow_right} 
                   className={`w-4 h-4 ${showProfileSection ? 'rotate-90' : ''}`}
-                  tintColor={isDark ? '#9CA3AF' : '#6B7280'}
+                  tintColor={isDark ? '#FFFFFF' : '#6B7280'}
                   resizeMode="contain"
                 />
               </View>
@@ -562,19 +541,6 @@ const ProfileScreen = (props: Props) => {
                     onBlur={() => setFocusedField(null)}
                     editable={isEditing}
                   />
-
-                  <LineInputField
-                    title="Bio"
-                    value={profile.bio}
-                    placeholder="Tell us about yourself"
-                    onChangeText={(text: string) => setProfile({...profile, bio: text})}
-                    multiline
-                    fieldName="bio"
-                    focusedField={focusedField}
-                    onFocus={() => setFocusedField('bio')}
-                    onBlur={() => setFocusedField(null)}
-                    editable={isEditing}
-                  />
                 </View>
 
                 {isEditing && (
@@ -588,25 +554,27 @@ const ProfileScreen = (props: Props) => {
             )}
           </View>
 
-          {/* About App Section - Collapsible */}
-          <View className="mb-3">
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('AboutApp')}
-              className={`flex-row items-center justify-between p-3 ${isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg`}>
-              <View className="flex-row items-center">
-                <Text className="text-2xl mr-3">ℹ️</Text>
-                <Text className={`text-base font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  About HAKIKISHA App
-                </Text>
-              </View>
-              <Image 
-                source={icons.arrow_right} 
-                className="w-4 h-4"
-                tintColor={isDark ? '#9CA3AF' : '#6B7280'}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
+          {/* About App Section - Collapsible (Hidden for Admins and Fact Checkers) */}
+          {profile.role !== 'admin' && profile.role !== 'fact_checker' && (
+            <View className="mb-3">
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('AboutApp')}
+                className={`flex-row items-center justify-between p-3 ${isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg`}>
+                <View className="flex-row items-center">
+                  <Text className="text-2xl mr-3">ℹ️</Text>
+                  <Text className={`text-base font-psemibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    About HAKIKISHA App
+                  </Text>
+                </View>
+                <Image 
+                  source={icons.arrow_right} 
+                  className="w-4 h-4"
+                  tintColor={isDark ? '#FFFFFF' : '#6B7280'}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Change Password Section - Collapsible */}
           <View className="mb-3">
@@ -625,13 +593,13 @@ const ProfileScreen = (props: Props) => {
                 </Text>
               </View>
               <View className="flex-row items-center">
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} font-pregular text-xs mr-2`}>
+                <Text className={`${isDark ? 'text-white' : 'text-gray-500'} font-pregular text-xs mr-2`}>
                   {showPasswordSection ? 'Hide' : 'Show'}
                 </Text>
                 <Image 
                   source={icons.arrow_right} 
                   className={`w-4 h-4 ${showPasswordSection ? 'rotate-90' : ''}`}
-                  tintColor={isDark ? '#9CA3AF' : '#6B7280'}
+                  tintColor={isDark ? '#FFFFFF' : '#6B7280'}
                   resizeMode="contain"
                 />
               </View>
@@ -639,7 +607,7 @@ const ProfileScreen = (props: Props) => {
 
             {showPasswordSection && (
               <View className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-4 mt-2`}>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-600'} font-pmedium text-sm mb-4`}>
+                <Text className={`${isDark ? 'text-white' : 'text-gray-600'} font-pmedium text-sm mb-4`}>
                   Update your account password for security
                 </Text>
 
@@ -689,7 +657,7 @@ const ProfileScreen = (props: Props) => {
                   <TouchableOpacity 
                     onPress={togglePasswordSection}
                     className={`flex-1 py-3 border ${isDark ? 'border-gray-600' : 'border-gray-300'} rounded-lg`}>
-                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-pmedium text-center text-sm`}>
+                    <Text className={`${isDark ? 'text-white' : 'text-gray-600'} font-pmedium text-center text-sm`}>
                       Cancel
                     </Text>
                   </TouchableOpacity>
@@ -706,6 +674,41 @@ const ProfileScreen = (props: Props) => {
               </View>
             )}
           </View>
+
+          {/* Logout Button */}
+          <TouchableOpacity 
+            onPress={async () => {
+              Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Logout',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await removeItem('userToken');
+                        await removeItem('userEmail');
+                        await removeItem('userName');
+                        await removeItem('auth_token');
+                        await removeItem('user_data');
+                        navigation.reset({
+                          index: 0,
+                          routes: [{ name: 'Login' }],
+                        });
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+            style={{backgroundColor: '#EF9334'}} 
+            className="rounded-xl p-4 mb-4">
+            <Text className="text-white font-pbold text-center text-base">Logout</Text>
+          </TouchableOpacity>
 
           {/* Danger Zone */}
           <View className="mb-6">
