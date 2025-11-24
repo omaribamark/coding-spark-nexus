@@ -46,13 +46,27 @@ const upload = multer({
 router.post('/image', authMiddleware, async (req, res) => {
   try {
     console.log('📤 Upload image request received');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request content-type:', req.get('content-type'));
+    
     const { image } = req.body;
 
     if (!image) {
       return res.status(400).json({
         success: false,
-        error: 'No image data provided',
-        code: 'VALIDATION_ERROR'
+        error: 'No image data provided. Expected { image: "data:image/..." } in request body.',
+        code: 'VALIDATION_ERROR',
+        hint: 'For file uploads, use /api/v1/upload/multipart endpoint instead'
+      });
+    }
+
+    // Check if it's a local file URI (common mistake from React Native)
+    if (image.startsWith('file://') || image.startsWith('content://')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Local file URIs are not supported. Please convert the image to base64 first or use the multipart endpoint.',
+        code: 'VALIDATION_ERROR',
+        hint: 'Use React Native FileSystem to read the file as base64, or send as multipart/form-data to /api/v1/upload/multipart'
       });
     }
 
@@ -60,8 +74,9 @@ router.post('/image', authMiddleware, async (req, res) => {
     if (!image.startsWith('data:image/')) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid image format. Please provide a base64 encoded image.',
-        code: 'VALIDATION_ERROR'
+        error: 'Invalid image format. Expected base64 encoded image starting with "data:image/"',
+        code: 'VALIDATION_ERROR',
+        receivedPrefix: image.substring(0, 50)
       });
     }
 
