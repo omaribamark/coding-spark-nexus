@@ -42,6 +42,7 @@ class DatabaseInitializer {
       await this.createUsersTable();
       await this.createUserSessionsTable();
       await this.createPointsTables();
+      await this.createMediaFilesTable();
       await this.createBlogTables();
       await this.createAdminTables();
       await this.createClaimsTable();
@@ -270,6 +271,57 @@ class DatabaseInitializer {
     } catch (error) {
       console.error('Error creating points tables:', error);
       throw error;
+    }
+  }
+
+  static async createMediaFilesTable() {
+    try {
+      console.log('Creating media files table...');
+
+      const query = `
+        CREATE TABLE IF NOT EXISTS hakikisha.media_files (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          filename VARCHAR(255) NOT NULL,
+          original_name VARCHAR(255),
+          mime_type VARCHAR(100) NOT NULL,
+          file_size INTEGER,
+          file_data TEXT NOT NULL,
+          uploaded_by UUID REFERENCES hakikisha.users(id),
+          upload_type VARCHAR(50) DEFAULT 'general',
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+      await db.query(query);
+      console.log('✅ Media files table created/verified');
+
+      // Create indexes for media_files
+      await this.createMediaFilesIndexes();
+
+    } catch (error) {
+      console.error('❌ Error creating media files table:', error);
+      throw error;
+    }
+  }
+
+  static async createMediaFilesIndexes() {
+    try {
+      const indexes = [
+        'CREATE INDEX IF NOT EXISTS idx_media_files_uploaded_by ON hakikisha.media_files(uploaded_by)',
+        'CREATE INDEX IF NOT EXISTS idx_media_files_upload_type ON hakikisha.media_files(upload_type)',
+        'CREATE INDEX IF NOT EXISTS idx_media_files_created_at ON hakikisha.media_files(created_at)'
+      ];
+
+      for (const indexQuery of indexes) {
+        try {
+          await db.query(indexQuery);
+        } catch (error) {
+          console.log(`ℹ️ Media files index might already exist: ${error.message}`);
+        }
+      }
+      console.log('✅ All media files indexes created/verified');
+    } catch (error) {
+      console.error('❌ Error creating media files indexes:', error);
     }
   }
 
@@ -661,6 +713,11 @@ class DatabaseInitializer {
       'CREATE INDEX IF NOT EXISTS idx_blog_articles_author_id ON hakikisha.blog_articles(author_id)',
       'CREATE INDEX IF NOT EXISTS idx_blog_articles_status ON hakikisha.blog_articles(status)',
       
+      // Media files indexes
+      'CREATE INDEX IF NOT EXISTS idx_media_files_uploaded_by ON hakikisha.media_files(uploaded_by)',
+      'CREATE INDEX IF NOT EXISTS idx_media_files_upload_type ON hakikisha.media_files(upload_type)',
+      'CREATE INDEX IF NOT EXISTS idx_media_files_created_at ON hakikisha.media_files(created_at)',
+      
       // Notification indexes
       'CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON hakikisha.notifications(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_user_notification_settings_user ON hakikisha.user_notification_settings(user_id)'
@@ -770,7 +827,7 @@ class DatabaseInitializer {
       // Check if all essential tables exist
       const essentialTables = [
         'users', 'user_sessions', 'claims', 'ai_verdicts', 'verdicts', 
-        'user_points', 'points_history', 'blog_articles',
+        'user_points', 'points_history', 'blog_articles', 'media_files',
         'user_notification_settings', 'notifications', 'otp_codes'
       ];
       

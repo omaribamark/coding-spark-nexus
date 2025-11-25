@@ -1,29 +1,14 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { authMiddleware } = require('../middleware/authMiddleware');
+const db = require('../config/database');
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = 'uploads/images/';
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueSuffix = uuidv4();
-    const fileExtension = path.extname(file.originalname);
-    cb(null, 'image-' + uniqueSuffix + fileExtension);
-  }
-});
+// Configure multer for memory storage (we'll store in database)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   // Check if file is an image
@@ -86,26 +71,30 @@ router.post('/image', authMiddleware, async (req, res) => {
       });
     }
 
-    const mimeType = matches[1];
+    const mimeType = `image/${matches[1]}`;
     const base64Data = matches[2];
-    const fileExtension = mimeType === 'jpeg' ? 'jpg' : mimeType;
+    const fileExtension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
     const filename = `image-${uuidv4()}.${fileExtension}`;
-    const filePath = path.join('uploads/images', filename);
+    
+    // Calculate file size (approximate from base64)
+    const fileSize = Math.round((base64Data.length * 3) / 4);
 
-    // Ensure upload directory exists
-    const uploadDir = path.dirname(filePath);
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    // Store image in database
+    const result = await db.query(
+      `INSERT INTO hakikisha.media_files 
+       (filename, original_name, mime_type, file_size, file_data, uploaded_by, upload_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, filename`,
+      [filename, filename, mimeType, fileSize, base64Data, req.user.userId, 'general']
+    );
 
-    // Write file
-    fs.writeFileSync(filePath, base64Data, 'base64');
+    const mediaId = result.rows[0].id;
+    
+    // Construct the URL to retrieve the image
+    const imageUrl = `${req.protocol}://${req.get('host')}/api/v1/upload/images/${mediaId}`;
 
-    // Construct the URL
-    const imageUrl = `${req.protocol}://${req.get('host')}/${filePath}`;
-
-    console.log('✅ File uploaded successfully:', filename);
-    console.log('📁 File path:', filePath);
+    console.log('✅ Image stored in database successfully:', filename);
+    console.log('📁 Media ID:', mediaId);
     console.log('🔗 Image URL:', imageUrl);
 
     res.json({
@@ -113,7 +102,7 @@ router.post('/image', authMiddleware, async (req, res) => {
       message: 'Image uploaded successfully',
       imageUrl: imageUrl,
       filename: filename,
-      path: filePath
+      mediaId: mediaId
     });
 
   } catch (error) {
@@ -128,7 +117,7 @@ router.post('/image', authMiddleware, async (req, res) => {
 });
 
 // Handle multipart form data image upload
-router.post('/multipart', authMiddleware, upload.single('image'), (req, res) => {
+router.post('/multipart', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     console.log('📤 Multipart image upload request received');
     
@@ -140,18 +129,32 @@ router.post('/multipart', authMiddleware, upload.single('image'), (req, res) => 
       });
     }
 
-    const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path}`;
+    const filename = `image-${uuidv4()}${path.extname(req.file.originalname)}`;
+    const base64Data = req.file.buffer.toString('base64');
+    const fileSize = req.file.size;
 
-    console.log('✅ Multipart file uploaded successfully:', req.file.filename);
-    console.log('📁 File path:', req.file.path);
+    // Store image in database
+    const result = await db.query(
+      `INSERT INTO hakikisha.media_files 
+       (filename, original_name, mime_type, file_size, file_data, uploaded_by, upload_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, filename`,
+      [filename, req.file.originalname, req.file.mimetype, fileSize, base64Data, req.user.userId, 'general']
+    );
+
+    const mediaId = result.rows[0].id;
+    const imageUrl = `${req.protocol}://${req.get('host')}/api/v1/upload/images/${mediaId}`;
+
+    console.log('✅ Multipart file stored in database:', filename);
+    console.log('📁 Media ID:', mediaId);
     console.log('🔗 Image URL:', imageUrl);
 
     res.json({
       success: true,
       message: 'Image uploaded successfully',
       imageUrl: imageUrl,
-      filename: req.file.filename,
-      path: req.file.path
+      filename: filename,
+      mediaId: mediaId
     });
 
   } catch (error) {
@@ -159,18 +162,26 @@ router.post('/multipart', authMiddleware, upload.single('image'), (req, res) => 
     res.status(500).json({
       success: false,
       error: 'Failed to upload image',
-      code: 'UPLOAD_ERROR'
+      code: 'UPLOAD_ERROR',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// Get uploaded image
-router.get('/images/:filename', (req, res) => {
+// Get uploaded image by media ID
+router.get('/images/:mediaId', async (req, res) => {
   try {
-    const { filename } = req.params;
-    const filePath = path.join('uploads/images', filename);
+    const { mediaId } = req.params;
 
-    if (!fs.existsSync(filePath)) {
+    // Retrieve image from database
+    const result = await db.query(
+      `SELECT filename, mime_type, file_data 
+       FROM hakikisha.media_files 
+       WHERE id = $1`,
+      [mediaId]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Image not found',
@@ -178,13 +189,23 @@ router.get('/images/:filename', (req, res) => {
       });
     }
 
-    res.sendFile(path.resolve(filePath));
+    const { mime_type, file_data } = result.rows[0];
+    
+    // Convert base64 back to buffer
+    const imageBuffer = Buffer.from(file_data, 'base64');
+
+    // Set proper headers
+    res.set('Content-Type', mime_type);
+    res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.send(imageBuffer);
+
   } catch (error) {
     console.error('❌ Get image error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get image',
-      code: 'SERVER_ERROR'
+      code: 'SERVER_ERROR',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
