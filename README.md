@@ -16,7 +16,7 @@ This document provides comprehensive API documentation for the CRECO fact-checki
 
 ---
 
-## Authentication
+## Authentication part
 
 All protected endpoints require authentication using JWT tokens.
 
