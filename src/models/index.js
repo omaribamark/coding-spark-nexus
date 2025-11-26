@@ -12,7 +12,7 @@ const FactCheckerActivity = require('./FactCheckerActivity');
 const TrendingTopic = require('./TrendingTopic');
 const SearchLog = require('./SearchLog');
 const UserSession = require('./UserSession');
-const RegistrationRequest = require('./RegistrationRequest'); // Add this line
+const RegistrationRequest = require('./RegistrationRequest'); 
 
 module.exports = {
   User,
@@ -28,5 +28,5 @@ module.exports = {
   TrendingTopic,
   SearchLog,
   UserSession,
-  RegistrationRequest // Add this line
+  RegistrationRequest 
 };

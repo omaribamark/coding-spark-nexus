@@ -139,9 +139,9 @@ const startServer = async () => {
       app.use(requestTimer);
       app.use(connectionPoolMonitor);
       app.use(memoryMonitor);
-      console.log('✅ Performance middleware loaded');
+      console.log('Performance middleware loaded');
     } catch (error) {
-      console.log('⚠️ Performance middleware not available:', error.message);
+      console.log('Performance middleware not available:', error.message);
     }
 
     // Health check endpoint
@@ -222,7 +222,7 @@ const startServer = async () => {
       { path: '/api/v1/ai', file: './src/routes/poeAIRoutes' },
       { path: '/api/v1/notifications', file: './src/routes/notificationRoutes' },
       { path: '/api/v1/points', file: './src/routes/pointsRoutes' },
-      { path: '/api/v1/upload', file: './src/routes/uploadRoutes' } // ADD THIS LINE
+      { path: '/api/v1/upload', file: './src/routes/uploadRoutes' }
     ];
 
     for (const route of routes) {
@@ -232,10 +232,10 @@ const startServer = async () => {
         
         const routeModule = require(route.file);
         app.use(route.path, routeModule);
-        console.log(` ✅ ${route.path} routes loaded`);
+        console.log(`${route.path} routes loaded`);
         
       } catch (error) {
-        console.error(` ❌ Failed to load ${route.path} routes:`, error.message);
+        console.error(`Failed to load ${route.path} routes:`, error.message);
         
         // Create a basic fallback route for critical endpoints
         if (route.path === '/api/v1/auth' || route.path === '/api/v1/health') {
@@ -246,7 +246,7 @@ const startServer = async () => {
               path: req.path
             });
           });
-          console.log(` ⚠️  Created fallback for ${route.path}`);
+          console.log(`Created fallback for ${route.path}`);
         }
       }
     }
@@ -343,7 +343,7 @@ const startServer = async () => {
           '/api/v1/ai/*',
           '/api/v1/notifications/*',
           '/api/v1/points/*',
-          '/api/v1/upload/*' // ADD THIS LINE
+          '/api/v1/upload/*'
         ]
       });
     });

@@ -119,7 +119,7 @@ app.get('/api/debug/env', (req, res) => {
 
 app.get('/api/debug/db', async (req, res) => {
   try {
-    const db = require('./config/database'); // ✅ Fixed path - use ./config instead of ./src/config
+    const db = require('./config/database');
     const result = await db.query(
       'SELECT current_schema(), version(), current_database()'
     );
@@ -154,13 +154,13 @@ app.get('/api/debug/db', async (req, res) => {
         exists: adminCheck.rows.length > 0,
         user: adminCheck.rows[0] || null
       },
-      message: '✅ Database connected successfully',
+      message: 'Database connected successfully',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error.message,
-      message: '❌ Database connection failed',
+      message: 'Database connection failed',
     });
   }
 });

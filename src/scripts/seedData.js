@@ -7,15 +7,15 @@ async function seedDatabase() {
     // Initialize complete database with default admin
     await DatabaseInitializer.initializeCompleteDatabase();
     
-    console.log('✅ Database seeding completed successfully!');
-    console.log('👤 Default Admin Credentials:');
+    console.log('Database seeding completed successfully!');
+    console.log('Default Admin Credentials:');
     console.log('   Email: crecocommunication@gmail.com');
-    console.log('   Password: 12345678');
+    console.log('   Password: Creco@2024Comms');
     console.log('   Role: admin');
     
     process.exit(0);
   } catch (error) {
-    console.error('❌ Database seeding failed:', error.message);
+    console.error('Database seeding failed:', error.message);
     process.exit(1);
   }
 }

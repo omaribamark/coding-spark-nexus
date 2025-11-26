@@ -30,14 +30,14 @@ const upload = multer({
 // Handle base64 image upload
 router.post('/image', authMiddleware, async (req, res) => {
   try {
-    console.log('📤 Upload image request received');
-    console.log('📋 Request body keys:', Object.keys(req.body));
-    console.log('📋 Request content-type:', req.get('content-type'));
+    console.log('Upload image request received');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request content-type:', req.get('content-type'));
     
     const { image } = req.body;
 
     if (!image) {
-      console.error('❌ No image data provided in request body');
+      console.error('No image data provided in request body');
       return res.status(400).json({
         success: false,
         error: 'No image data provided',
@@ -46,12 +46,12 @@ router.post('/image', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log('📝 Image data type:', typeof image);
-    console.log('📝 Image data preview:', typeof image === 'string' ? image.substring(0, 100) : 'Not a string');
+    console.log('Image data type:', typeof image);
+    console.log('Image data preview:', typeof image === 'string' ? image.substring(0, 100) : 'Not a string');
 
     // Check if it's a base64 image
     if (typeof image !== 'string' || !image.startsWith('data:image/')) {
-      console.error('❌ Invalid image format. Expected base64 string starting with data:image/');
+      console.error('Invalid image format. Expected base64 string starting with data:image/');
       return res.status(400).json({
         success: false,
         error: 'Invalid image format. Please provide a base64 encoded image.',
@@ -93,9 +93,9 @@ router.post('/image', authMiddleware, async (req, res) => {
     // Construct the URL to retrieve the image
     const imageUrl = `${req.protocol}://${req.get('host')}/api/v1/upload/images/${mediaId}`;
 
-    console.log('✅ Image stored in database successfully:', filename);
-    console.log('📁 Media ID:', mediaId);
-    console.log('🔗 Image URL:', imageUrl);
+    console.log('Image stored in database successfully:', filename);
+    console.log('Media ID:', mediaId);
+    console.log('Image URL:', imageUrl);
 
     res.json({
       success: true,
@@ -106,7 +106,7 @@ router.post('/image', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Image upload error:', error);
+    console.error('Image upload error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to upload image',
@@ -119,7 +119,7 @@ router.post('/image', authMiddleware, async (req, res) => {
 // Handle multipart form data image upload
 router.post('/multipart', authMiddleware, upload.single('image'), async (req, res) => {
   try {
-    console.log('📤 Multipart image upload request received');
+    console.log('Multipart image upload request received');
     
     if (!req.file) {
       return res.status(400).json({
@@ -145,9 +145,9 @@ router.post('/multipart', authMiddleware, upload.single('image'), async (req, re
     const mediaId = result.rows[0].id;
     const imageUrl = `${req.protocol}://${req.get('host')}/api/v1/upload/images/${mediaId}`;
 
-    console.log('✅ Multipart file stored in database:', filename);
-    console.log('📁 Media ID:', mediaId);
-    console.log('🔗 Image URL:', imageUrl);
+    console.log('Multipart file stored in database:', filename);
+    console.log('Media ID:', mediaId);
+    console.log('Image URL:', imageUrl);
 
     res.json({
       success: true,
@@ -158,7 +158,7 @@ router.post('/multipart', authMiddleware, upload.single('image'), async (req, re
     });
 
   } catch (error) {
-    console.error('❌ Multipart upload error:', error);
+    console.error('Multipart upload error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to upload image',
@@ -200,7 +200,7 @@ router.get('/images/:mediaId', async (req, res) => {
     res.send(imageBuffer);
 
   } catch (error) {
-    console.error('❌ Get image error:', error);
+    console.error('Get image error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get image',

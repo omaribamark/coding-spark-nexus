@@ -77,9 +77,9 @@ class ClaimController {
           'CLAIM_SUBMISSION', 
           'Submitted a claim for fact-checking'
         );
-        console.log('✅ Successfully awarded 5 points for claim submission');
+        console.log('Successfully awarded 5 points for claim submission');
       } catch (pointsError) {
-        console.error('❌ Failed to award points:', pointsError);
+        console.error('Failed to award points:', pointsError);
         // Continue even if points fail - don't block claim submission
       }
 
@@ -111,7 +111,7 @@ class ClaimController {
         });
         
         requiresHumanReview = true;
-        console.log('✅ Claim routed to human fact checkers:', claimId);
+        console.log('Claim routed to human fact checkers:', claimId);
       } else {
         // Automatically process claim with AI (text-only claims)
         try {
@@ -189,7 +189,7 @@ class ClaimController {
               related_entity_id: claimId
             });
             
-            console.log('✅ AI verdict created and claim status updated to completed:', claimId);
+            console.log('AI verdict created and claim status updated to completed:', claimId);
           } else {
             await db.query(
               `UPDATE hakikisha.claims 
@@ -198,7 +198,7 @@ class ClaimController {
                WHERE id = $1`,
               [claimId]
             );
-            console.log('⚠️ AI processing failed, claim status updated:', claimId);
+            console.log('AI processing failed, claim status updated:', claimId);
           }
         } catch (aiError) {
           console.log('AI processing failed, updating claim status:', aiError.message);
@@ -354,9 +354,9 @@ class ClaimController {
           ALTER TABLE hakikisha.claims 
           ADD COLUMN source_url TEXT
         `);
-        console.log('✅ source_url column added to claims table');
+        console.log('source_url column added to claims table');
       } else {
-        console.log('✅ source_url column already exists in claims table');
+        console.log('source_url column already exists in claims table');
       }
       
       // Also check for video_url column
@@ -376,9 +376,9 @@ class ClaimController {
           ALTER TABLE hakikisha.claims 
           ADD COLUMN video_url TEXT
         `);
-        console.log('✅ video_url column added to claims table');
+        console.log('video_url column added to claims table');
       } else {
-        console.log('✅ video_url column already exists in claims table');
+        console.log('video_url column already exists in claims table');
       }
     } catch (error) {
       console.error('Error ensuring claims table columns:', error);
@@ -393,7 +393,7 @@ class ClaimController {
       // Add missing columns if they don't exist
       await this.ensureClaimsTableColumns();
       
-      console.log('✅ Claims table schema fixed successfully');
+      console.log('Claims table schema fixed successfully');
     } catch (error) {
       console.error('Error fixing claims table schema:', error);
       throw error;

@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 class NotificationController {
   async getUnreadVerdicts(req, res) {
     try {
-      console.log('🔔 Get Unread Verdicts - User:', req.user.userId);
+      console.log('Get Unread Verdicts - User:', req.user.userId);
       
       const userId = req.user.userId;
 
@@ -39,7 +39,7 @@ class NotificationController {
       console.log('Executing unread verdicts query for user:', userId);
       const result = await db.query(query, [userId]);
 
-      console.log(`✅ Found ${result.rows.length} unread verdicts for user ${userId}`);
+      console.log(`Found ${result.rows.length} unread verdicts for user ${userId}`);
 
       res.json({
         success: true,
@@ -48,7 +48,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('❌ Get unread verdicts error:', error);
+      console.error('Get unread verdicts error:', error);
       logger.error('Get unread verdicts error:', error);
       
       // Return empty array instead of error for now
@@ -63,7 +63,7 @@ class NotificationController {
 
   async getUnreadVerdictCount(req, res) {
     try {
-      console.log('🔔 Get Unread Verdict Count - User:', req.user.userId);
+      console.log('Get Unread Verdict Count - User:', req.user.userId);
       
       const userId = req.user.userId;
 
@@ -80,7 +80,7 @@ class NotificationController {
       const result = await db.query(query, [userId]);
 
       const count = parseInt(result.rows[0].count);
-      console.log(`✅ Unread verdict count for user ${userId}: ${count}`);
+      console.log(`Unread verdict count for user ${userId}: ${count}`);
 
       res.json({
         success: true,
@@ -88,7 +88,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('❌ Get unread verdict count error:', error);
+      console.error('Get unread verdict count error:', error);
       logger.error('Get unread verdict count error:', error);
       
       // Return 0 instead of error
@@ -102,7 +102,7 @@ class NotificationController {
   async markVerdictAsRead(req, res) {
     try {
       const { verdictId } = req.params;
-      console.log('📌 Mark Verdict as Read - User:', req.user.userId, 'Claim:', verdictId);
+      console.log('Mark Verdict as Read - User:', req.user.userId, 'Claim:', verdictId);
 
       const userId = req.user.userId;
 
@@ -127,7 +127,7 @@ class NotificationController {
         });
       }
 
-      console.log('✅ Verdict notification marked as read for user:', userId);
+      console.log('Verdict notification marked as read for user:', userId);
 
       res.json({
         success: true,
@@ -135,7 +135,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('❌ Mark verdict as read error:', error);
+      console.error('Mark verdict as read error:', error);
       logger.error('Mark verdict as read error:', error);
       
       res.status(500).json({
@@ -149,7 +149,7 @@ class NotificationController {
   async markAllVerdictsAsRead(req, res) {
     try {
       const userId = req.user.userId;
-      console.log('📌 Mark All Verdicts as Read - User:', userId);
+      console.log('Mark All Verdicts as Read - User:', userId);
 
       // Mark all verdict notifications as read
       const updateQuery = `
@@ -164,7 +164,7 @@ class NotificationController {
 
       const result = await db.query(updateQuery, [userId]);
       
-      console.log(`✅ Marked ${result.rows.length} verdicts as read for user:`, userId);
+      console.log(`Marked ${result.rows.length} verdicts as read for user:`, userId);
 
       res.json({
         success: true,
@@ -173,7 +173,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('❌ Mark all verdicts as read error:', error);
+      console.error('Mark all verdicts as read error:', error);
       logger.error('Mark all verdicts as read error:', error);
       
       res.status(500).json({
@@ -186,7 +186,7 @@ class NotificationController {
 
   async getUserNotifications(req, res) {
     try {
-      console.log('🔔 Get User Notifications - User:', req.user.userId);
+      console.log('Get User Notifications - User:', req.user.userId);
       
       const userId = req.user.userId;
       const { page = 1, limit = 20, unread = false, type = null } = req.query;
@@ -235,7 +235,7 @@ class NotificationController {
         [userId]
       );
 
-      console.log(`✅ Found ${result.rows.length} notifications for user ${userId}`);
+      console.log(`Found ${result.rows.length} notifications for user ${userId}`);
 
       res.json({
         success: true,
@@ -249,7 +249,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('❌ Get user notifications error:', error);
+      console.error('Get user notifications error:', error);
       logger.error('Get user notifications error:', error);
       
       // Return empty array instead of error

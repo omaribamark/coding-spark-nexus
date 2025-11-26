@@ -18,11 +18,11 @@ async function createAdminUser() {
     );
 
     if (existingAdmin.rows.length > 0) {
-      console.log('✅ Admin user already exists');
+      console.log('Admin user already exists');
       return;
     }
 
-    console.log('👤 Creating admin user...');
+    console.log('Creating admin user...');
 
     // Admin credentials
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@hakikisha.com';
@@ -52,17 +52,17 @@ async function createAdminUser() {
     // Generate QR code for 2FA setup
     const qrCodeUrl = await QRCode.toDataURL(twoFactorSecret.otpauth_url);
 
-    console.log('\n✅ Admin user created successfully!');
-    console.log('\n📧 Admin Credentials:');
+    console.log('\nAdmin user created successfully!');
+    console.log('\nAdmin Credentials:');
     console.log('   Email:', adminEmail);
     console.log('   Password:', adminPassword);
-    console.log('\n🔐 Two-Factor Authentication:');
+    console.log('\nTwo-Factor Authentication:');
     console.log('   Secret:', twoFactorSecret.base32);
-    console.log('\n📱 2FA Setup:');
+    console.log('\n2FA Setup:');
     console.log('   1. Download Google Authenticator or Authy app');
     console.log('   2. Scan this QR code (save the image):');
     console.log('   QR Code URL:', qrCodeUrl);
-    console.log('\n⚠️  IMPORTANT:');
+    console.log('\nIMPORTANT:');
     console.log('   - Change the admin password immediately after first login');
     console.log('   - Store the 2FA secret securely');
     console.log('   - Never commit these credentials to version control\n');
@@ -71,7 +71,7 @@ async function createAdminUser() {
     const fs = require('fs');
     const qrCodeBase64 = qrCodeUrl.split(',')[1];
     fs.writeFileSync('admin-2fa-qr.png', qrCodeBase64, 'base64');
-    console.log('💾 QR code saved to: admin-2fa-qr.png\n');
+    console.log('QR code saved to: admin-2fa-qr.png\n');
 
     return {
       adminId,
@@ -80,7 +80,7 @@ async function createAdminUser() {
       qrCodeUrl
     };
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error('Error creating admin user:', error);
     throw error;
   }
 }
@@ -89,11 +89,11 @@ async function createAdminUser() {
 if (require.main === module) {
   createAdminUser()
     .then(() => {
-      console.log('✅ Admin creation completed');
+      console.log('Admin creation completed');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Admin creation failed:', error);
+      console.error('Admin creation failed:', error);
       process.exit(1);
     });
 }
