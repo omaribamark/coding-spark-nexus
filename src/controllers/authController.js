@@ -306,7 +306,6 @@ const login = async (req, res) => {
     });
     
     // TRIM input to handle spaces and normalize email to lowercase
-    // Accept both 'email' and 'identifier' fields for backward compatibility
     const emailOrUsername = req.body.identifier 
       ? req.body.identifier.trim().toLowerCase() 
       : (req.body.email ? req.body.email.trim().toLowerCase() : '');
@@ -360,13 +359,21 @@ const login = async (req, res) => {
       });
     }
 
-    // ==================== GOOGLE PLAY STORE OTP BYPASS - START ====================
+    // ==================== CRITICAL FIX: GOOGLE PLAY STORE OTP BYPASS ====================
     const isBypassUser = shouldBypassOTP(user.email);
-    const isTestUser = user.is_playstore_test === true;
+    const isTestUser = user.is_playstore_test === true || isBypassUser;
     
-    // Skip ALL verification for Play Store test users
+    console.log('🔍 User authentication check:', {
+      email: user.email,
+      isBypassUser,
+      isPlaystoreTest: user.is_playstore_test,
+      isTestUser,
+      twoFactorEnabled: user.two_factor_enabled
+    });
+
+    // 🚨 CRITICAL FIX: Skip ALL verification for Play Store test users AND hardcoded bypass users
     if (isTestUser) {
-      console.log(`🔓 FULL OTP BYPASS for Play Store test user: ${user.email}`);
+      console.log(`🔓 FULL OTP BYPASS for test user: ${user.email}`);
       
       // Update login stats
       await db.query(
@@ -393,13 +400,13 @@ const login = async (req, res) => {
       // Create user session
       await createUserSession(user, token, refreshToken);
 
-      console.log(`🔓 Play Store test user login successful: ${user.email}`);
+      console.log(`🔓 Test user login successful: ${user.email}`);
 
       return res.json({
         success: true,
-        message: 'Login successful (Play Store test account)',
-        token,
-        refreshToken,
+        message: 'Login successful (test account)',
+        token: token,
+        refreshToken: refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -409,9 +416,17 @@ const login = async (req, res) => {
           registration_status: user.registration_status,
           two_factor_enabled: user.two_factor_enabled,
           is_playstore_test: user.is_playstore_test
-        }
+        },
+        // 🚨 CRITICAL: Ensure these flags are set correctly
+        requires2FA: false,
+        isTestUser: true,
+        hasToken: true
       });
     }
+    // ==================== END CRITICAL FIX ====================
+
+    // Continue with normal login flow for non-test users...
+    // ... rest of your existing code for regular users
     
     // Skip email verification check for bypass user
     if (!isBypassUser && !user.is_verified) {
