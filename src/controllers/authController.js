@@ -301,6 +301,7 @@ const login = async (req, res) => {
     console.log('Login Request Received');
     console.log('Login attempt:', { 
       email: req.body.email, 
+      username: req.body.username,
       identifier: req.body.identifier,
       hasPassword: !!req.body.password 
     });
@@ -338,6 +339,22 @@ const login = async (req, res) => {
     }
 
     const user = userResult.rows[0];
+    
+    // ==================== GOOGLE PLAY STORE OTP BYPASS - START ====================
+    // DELETE AFTER GOOGLE PLAY STORE APPROVAL
+    // Check IMMEDIATELY after getting user if this is a test/bypass user
+    const isBypassUser = shouldBypassOTP(user.email);
+    const isDbTestUser = user.is_playstore_test === true;
+    const isTestUser = isDbTestUser || isBypassUser;
+    
+    console.log('🔍 TEST USER CHECK (immediately after user fetch):', {
+      email: user.email,
+      emailLowerCase: user.email.toLowerCase(),
+      isBypassUser,
+      isDbTestUser,
+      isTestUser
+    });
+    // ==================== GOOGLE PLAY STORE OTP BYPASS - END ====================
 
     // Check if account is suspended, inactive, or deactivated
     if (user.status !== 'active') {
@@ -359,21 +376,12 @@ const login = async (req, res) => {
       });
     }
 
-    // ==================== CRITICAL FIX: GOOGLE PLAY STORE OTP BYPASS ====================
-    const isBypassUser = shouldBypassOTP(user.email);
-    const isTestUser = user.is_playstore_test === true || isBypassUser;
-    
-    console.log('🔍 User authentication check:', {
-      email: user.email,
-      isBypassUser,
-      isPlaystoreTest: user.is_playstore_test,
-      isTestUser,
-      twoFactorEnabled: user.two_factor_enabled
-    });
-
-    // 🚨 CRITICAL FIX: Skip ALL verification for Play Store test users AND hardcoded bypass users
+    // ==================== GOOGLE PLAY STORE OTP BYPASS - START ====================
+    // DELETE AFTER GOOGLE PLAY STORE APPROVAL
+    // 🚨 CRITICAL: Skip ALL verification for test users - return tokens directly
     if (isTestUser) {
-      console.log(`🔓 FULL OTP BYPASS for test user: ${user.email}`);
+      console.log(`🔓 FULL OTP BYPASS TRIGGERED for test user: ${user.email}`);
+      console.log(`🔓 Generating tokens directly without any 2FA or email verification`);
       
       // Update login stats
       await db.query(
@@ -400,11 +408,13 @@ const login = async (req, res) => {
       // Create user session
       await createUserSession(user, token, refreshToken);
 
-      console.log(`🔓 Test user login successful: ${user.email}`);
+      console.log(`🔓 Test user login successful - TOKEN GENERATED: ${user.email}`);
+      console.log(`🔓 Token length: ${token.length}, RefreshToken length: ${refreshToken.length}`);
 
+      // 🚨 CRITICAL: Return tokens directly for test users
       return res.json({
         success: true,
-        message: 'Login successful (test account)',
+        message: 'Login successful (test account - 2FA bypassed)',
         token: token,
         refreshToken: refreshToken,
         user: {
@@ -412,18 +422,25 @@ const login = async (req, res) => {
           email: user.email,
           username: user.username,
           role: user.role,
-          is_verified: user.is_verified,
-          registration_status: user.registration_status,
-          two_factor_enabled: user.two_factor_enabled,
-          is_playstore_test: user.is_playstore_test
+          is_verified: true, // Force true for test users
+          registration_status: 'approved', // Force approved for test users
+          two_factor_enabled: false, // Force false for test users
+          is_playstore_test: true
         },
-        // 🚨 CRITICAL: Ensure these flags are set correctly
         requires2FA: false,
         isTestUser: true,
         hasToken: true
       });
     }
-    // ==================== END CRITICAL FIX ====================
+    // ==================== GOOGLE PLAY STORE OTP BYPASS - END ====================
+    
+    console.log('🔍 User authentication check (regular user flow):', {
+      email: user.email,
+      isBypassUser,
+      isPlaystoreTest: user.is_playstore_test,
+      isTestUser,
+      twoFactorEnabled: user.two_factor_enabled
+    });
 
     // Continue with normal login flow for non-test users...
     // ... rest of your existing code for regular users
