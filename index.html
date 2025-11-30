@@ -1,95 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="HAKIKISHA Backend API - Fact-Checking Platform">
-  <title>HAKIKISHA Backend API</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 800px;
-      margin: 80px auto;
-      padding: 20px;
-      background: linear-gradient(135deg, #0A864D 0%, #EF9334 100%);
-      color: white;
-    }
-    .card {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-    h1 { margin-top: 0; }
-    a { color: #EF9334; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    code {
-      background: rgba(0,0,0,0.3);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-    }
-    .status { 
-      color: #4ade80;
-      font-weight: bold;
-    }
-    ul { line-height: 1.8; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>HAKIKISHA Backend API</h1>
-    <p class="status">Backend Server Running</p>
-    <p>This is a <strong>Node.js/Express backend API</strong> for the HAKIKISHA mobile application.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cardiovascular Patient Management Platform</title>
+    <meta name="description" content="Comprehensive cardiovascular patient management system for cardiac care from registration to discharge" />
+    <meta name="author" content="Cardiovascular Care Team" />
+
+    <!-- Social Meta Tags -->
+    <meta property="og:title" content="Cardiovascular Patient Management Platform" />
+    <meta property="og:description" content="Advanced cardiovascular patient management and cardiac care system." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icons/doctor-icon.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@deepkentom" />
+    <meta name="twitter:image" content="/icons/doctor-icon.png" />
+
+    <!-- Favicon or doctor icon -->
+    <link rel="icon" href="/icons/doctor-icon.png" type="image/png" />
     
-    <h2>Important Note</h2>
-    
-    
-    <h2>Deployment</h2>
-    <p>Follow the instructions in <code>BACKEND_DEPLOYMENT.md</code> to deploy to AWS.</p>
-    
-    <h2>API Documentation</h2>
-    <p>Base URL: <code>https://your-aws-domain.com/api/v1</code></p>
-    
-    <h3>Key Features Implemented:</h3>
-    <ul>
-      <li>Auto-created admin with 2FA authentication</li>
-      <li>Points system with daily reset (skip a day = reset to 0)</li>
-      <li>JWT Authentication with refresh tokens</li>
-      <li>User, Fact-Checker, and Admin roles</li>
-      <li>Claims submission and verification</li>
-      <li>AI-assisted fact-checking</li>
-      <li>Blog management</li>
-      <li>Leaderboard and streak tracking</li>
-      <li>CORS configured for mobile apps</li>
-    </ul>
-    
-    <h2>Mobile App Integration</h2>
-    <p>Update your mobile app's API base URL to point to your deployed AWS backend:</p>
-    <code>API_BASE_URL = "https://your-aws-domain.com/api/v1"</code>
-    
-    <h2>Points System</h2>
-    <ul>
-      <li>Daily Login: 5 points</li>
-      <li>Submit Claim: 10 points</li>
-      <li>First Claim: 50 points</li>
-      <li>Claim Verified: 20 points</li>
-      <li>Skip a day? Points reset to ZERO!</li>
-      <li>Streak bonuses at 3, 7, and 30 days</li>
-    </ul>
-    
-    <h2>Admin Setup</h2>
-    <p>Run: <code>node src/scripts/createAdmin.js</code></p>
-    <p>See <code>ADMIN_SETUP.md</code> for 2FA configuration</p>
-    
-    <h2>Resources</h2>
-    <ul>
-      <li><a href="/health">Health Check</a></li>
-      <li><a href="/api/debug/db">Database Status</a></li>
-      <li>See <code>BACKEND_DEPLOYMENT.md</code> for full deployment guide</li>
-      <li>See <code>ADMIN_SETUP.md</code> for admin & points setup</li>
-    </ul>
-  </div>
-</body>
+    <!-- Hospital-themed fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
